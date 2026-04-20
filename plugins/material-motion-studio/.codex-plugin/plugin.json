@@ -1,0 +1,41 @@
+{
+  "name": "material-motion-studio",
+  "version": "0.1.0",
+  "description": "A local motion system workspace for Material-based Figma review, presets, and component demos.",
+  "author": {
+    "name": "Klas Thorsen",
+    "email": "",
+    "url": ""
+  },
+  "homepage": "",
+  "repository": "",
+  "license": "UNLICENSED",
+  "keywords": [
+    "material-motion",
+    "figma",
+    "design-system",
+    "prototype"
+  ],
+  "skills": "./skills/",
+  "apps": "./.app.json",
+  "interface": {
+    "displayName": "Material Motion Studio",
+    "shortDescription": "Motion patterns and Figma review workflow",
+    "longDescription": "Collect component examples, tune motion parameters, and document repeatable Material motion rules for design work.",
+    "developerName": "Klas Thorsen",
+    "category": "Design",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "",
+    "privacyPolicyURL": "",
+    "termsOfServiceURL": "",
+    "defaultPrompt": [
+      "Review this Figma flow and map it to Material motion patterns.",
+      "Create a reusable motion guideline for these dashboard components.",
+      "Tune the timings for this KPI drill-down and tab switch."
+    ],
+    "brandColor": "#006874"
+  }
+}

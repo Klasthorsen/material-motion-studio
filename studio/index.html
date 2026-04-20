@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Material Motion Studio</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="panel controls">
+        <div class="eyebrow">Material Motion Studio</div>
+        <h1>Motion guidelines across projects</h1>
+        <p class="intro">
+          Build a reusable motion source of truth for multiple Figma projects.
+          Components imported into the studio get Material-aware defaults based on
+          hierarchy, continuity, and interaction role.
+        </p>
+
+        <section class="control-group">
+          <label for="projectSelect">Project</label>
+          <select id="projectSelect"></select>
+        </section>
+
+        <section class="inline-fields">
+          <div class="control-group">
+            <label for="newProjectName">New project</label>
+            <input id="newProjectName" type="text" placeholder="Q2 Analytics">
+          </div>
+          <div class="control-group align-end">
+            <button id="createProject" class="primary">Create</button>
+          </div>
+        </section>
+
+        <section class="control-group">
+          <label for="figmaImport">Paste Figma component JSON</label>
+          <textarea
+            id="figmaImport"
+            rows="5"
+            placeholder='{"name":"Revenue card","figmaUrl":"https://figma.com/...","componentType":"metric-card"}'
+          ></textarea>
+        </section>
+
+        <div class="actions single">
+          <button id="importFigma">Import component</button>
+        </div>
+
+        <section class="control-group stack">
+          <div class="section-head">
+            <h2>Component intake</h2>
+            <span class="section-kicker">Material mapping</span>
+          </div>
+
+          <label for="componentName">Component name</label>
+          <input id="componentName" type="text" placeholder="Conversion KPI card">
+
+          <label for="figmaUrl">Figma URL or node</label>
+          <input id="figmaUrl" type="text" placeholder="https://www.figma.com/design/...">
+
+          <label for="componentType">Component type</label>
+          <select id="componentType">
+            <option value="metric-card">Metric card</option>
+            <option value="chart-panel">Chart panel</option>
+            <option value="tab-panel">Tab panel</option>
+            <option value="filter-group">Filter group</option>
+            <option value="dialog-sheet">Dialog or sheet</option>
+            <option value="list-row">List row</option>
+            <option value="nav-item">Navigation item</option>
+          </select>
+
+          <label for="relationship">UI relationship</label>
+          <select id="relationship">
+            <option value="container">One surface becomes another</option>
+            <option value="sibling">Sibling views</option>
+            <option value="hierarchy">Deeper hierarchy</option>
+            <option value="swap">Content swap</option>
+            <option value="ephemeral">Ephemeral appearance</option>
+          </select>
+
+          <label for="prominence">Motion scheme</label>
+          <select id="prominence">
+            <option value="standard">Standard</option>
+            <option value="expressive">Expressive</option>
+          </select>
+
+          <label for="motionRole">Motion role</label>
+          <select id="motionRole">
+            <option value="spatial">Spatial or bounds change</option>
+            <option value="effects">Effects only</option>
+          </select>
+
+          <div class="actions double">
+            <button id="recommendMotion" class="primary">Recommend</button>
+            <button id="saveComponent">Save component</button>
+          </div>
+        </section>
+
+        <section class="control-group stack">
+          <div class="section-head">
+            <h2>Motion spec</h2>
+            <span class="section-kicker">Adjustable tokens</span>
+          </div>
+
+          <label for="preset">Transition pattern</label>
+          <select id="preset">
+            <option value="container-transform">Container transform</option>
+            <option value="shared-axis-x">Shared axis X</option>
+            <option value="shared-axis-z">Shared axis Z</option>
+            <option value="fade-through">Fade through</option>
+            <option value="fade">Fade</option>
+            <option value="micro-interaction">Micro interaction</option>
+          </select>
+
+          <label for="duration">Duration <span id="durationValue">300 ms</span></label>
+          <input id="duration" type="range" min="120" max="450" step="5" value="300">
+
+          <label for="easing">Easing</label>
+          <select id="easing">
+            <option value="cubic-bezier(0.4, 0, 0.2, 1)">Standard</option>
+            <option value="cubic-bezier(0, 0, 0.2, 1)">Enter</option>
+            <option value="cubic-bezier(0.4, 0, 1, 1)">Exit</option>
+            <option value="cubic-bezier(0.4, 0, 0.6, 1)">Sharp</option>
+          </select>
+
+          <div class="control-grid">
+            <div class="control-group">
+              <label for="distance">Move <span id="distanceValue">32 px</span></label>
+              <input id="distance" type="range" min="0" max="72" step="2" value="32">
+            </div>
+            <div class="control-group">
+              <label for="scale">Scale <span id="scaleValue">0.94</span></label>
+              <input id="scale" type="range" min="0.85" max="1" step="0.01" value="0.94">
+            </div>
+            <div class="control-group">
+              <label for="opacity">Opacity start <span id="opacityValue">0.00</span></label>
+              <input id="opacity" type="range" min="0" max="1" step="0.05" value="0">
+            </div>
+            <div class="control-group">
+              <label for="stagger">Stagger <span id="staggerValue">30 ms</span></label>
+              <input id="stagger" type="range" min="0" max="80" step="5" value="30">
+            </div>
+          </div>
+        </section>
+
+        <section class="control-group notes">
+          <div class="section-head">
+            <h2>Applied guidance</h2>
+            <span class="section-kicker">Material rationale</span>
+          </div>
+          <ul id="guidanceList"></ul>
+        </section>
+
+        <div class="actions double">
+          <button id="replay" class="primary">Replay motion</button>
+          <button id="copySpec">Copy spec</button>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <section class="panel summary">
+          <div class="panel-header">
+            <div>
+              <div class="eyebrow">Selected component</div>
+              <h2 id="selectedComponentName">Conversion KPI card</h2>
+            </div>
+            <span class="status" id="presetLabel">Container transform</span>
+          </div>
+
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="summary-label">Project</div>
+              <div class="summary-value" id="summaryProject">Core analytics</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">Pattern</div>
+              <div class="summary-value" id="summaryPattern">Container transform</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">Scheme</div>
+              <div class="summary-value" id="summaryScheme">Standard</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-label">Role</div>
+              <div class="summary-value" id="summaryRole">Spatial</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="workspace-split">
+          <section class="panel source-panel">
+            <div class="panel-header">
+              <div>
+                <div class="eyebrow">Step 1</div>
+                <h2>Link frame or upload image</h2>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label for="sourceMode">Source mode</label>
+              <select id="sourceMode">
+                <option value="figma">Figma frame</option>
+                <option value="image">Uploaded image</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label for="sourceFrameUrl">Frame URL</label>
+              <input id="sourceFrameUrl" type="text" placeholder="https://www.figma.com/design/...">
+            </div>
+
+            <div class="control-group">
+              <label for="sourceImage">Upload image</label>
+              <input id="sourceImage" type="file" accept="image/*">
+            </div>
+
+            <div class="source-preview" id="sourcePreview">
+              <div class="source-placeholder">No frame image loaded yet.</div>
+            </div>
+          </section>
+
+          <section class="panel prototype-panel">
+            <div class="panel-header">
+              <div>
+                <div class="eyebrow">Step 2</div>
+                <h2>Build HTML prototype and motion suggestion</h2>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label for="prototypePrompt">Prompt in app</label>
+              <textarea
+                id="prototypePrompt"
+                rows="4"
+                placeholder="Describe what should stand out, what changes between states, and whether the feel should be standard or expressive."
+              ></textarea>
+            </div>
+
+            <div class="actions double">
+              <button id="generatePrototype" class="primary">Generate prototype</button>
+              <button id="applyPrototypeSuggestion">Apply suggestion</button>
+            </div>
+
+            <div class="prototype-meta" id="prototypeMeta"></div>
+            <div class="prototype-preview" id="prototypePreview"></div>
+            <textarea id="prototypeCode" rows="10" readonly></textarea>
+          </section>
+        </section>
+
+        <section class="panel preview">
+          <div class="panel-header">
+            <div>
+              <div class="eyebrow">Live preview</div>
+              <h2>Material patterns for analytics UIs</h2>
+            </div>
+          </div>
+
+          <div class="preview-grid">
+            <article class="demo-card" data-demo="kpi">
+              <div class="card-header">
+                <span class="pill">KPI drill-down</span>
+                <button class="ghost-button" data-trigger="kpi">Preview</button>
+              </div>
+              <div class="stage stage-kpi">
+                <div class="kpi-surface motion-target">
+                  <div class="kpi-copy">
+                    <div class="metric-label">Conversion</div>
+                    <div class="metric-value">12.4%</div>
+                    <div class="metric-delta positive">+2.1 this week</div>
+                  </div>
+                  <div class="sparkline"></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="demo-card" data-demo="tabs">
+              <div class="card-header">
+                <span class="pill">Tab switch</span>
+                <button class="ghost-button" data-trigger="tabs">Preview</button>
+              </div>
+              <div class="stage stage-tabs">
+                <div class="tabs">
+                  <span class="tab active">Overview</span>
+                  <span class="tab">Breakdown</span>
+                  <span class="tab">Compare</span>
+                </div>
+                <div class="tab-panel motion-target">
+                  <div class="bar-row stagger-target"></div>
+                  <div class="bar-row stagger-target wide"></div>
+                  <div class="bar-row stagger-target medium"></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="demo-card" data-demo="filters">
+              <div class="card-header">
+                <span class="pill">Filter swap</span>
+                <button class="ghost-button" data-trigger="filters">Preview</button>
+              </div>
+              <div class="stage stage-filters">
+                <div class="filter-row">
+                  <span class="chip active">Last 7 days</span>
+                  <span class="chip">Last 30 days</span>
+                  <span class="chip">Region</span>
+                </div>
+                <div class="data-surface motion-target">
+                  <div class="data-column stagger-target tall"></div>
+                  <div class="data-column stagger-target medium"></div>
+                  <div class="data-column stagger-target short"></div>
+                  <div class="data-column stagger-target medium"></div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="workspace-split">
+          <section class="panel inventory">
+            <div class="panel-header">
+              <div>
+                <div class="eyebrow">Project inventory</div>
+                <h2>Imported components</h2>
+              </div>
+            </div>
+            <div id="componentList" class="component-list"></div>
+          </section>
+
+          <section class="panel guidelines">
+            <div class="panel-header">
+              <div>
+                <div class="eyebrow">Generated guideline</div>
+                <h2>Reusable motion brief</h2>
+              </div>
+            </div>
+            <textarea id="guidelineOutput" rows="18" readonly></textarea>
+          </section>
+        </section>
+
+        <section class="panel library">
+          <div class="panel-header">
+            <div>
+              <div class="eyebrow">Material mapping</div>
+              <h2>Transition families in the studio</h2>
+            </div>
+          </div>
+          <div class="library-grid" id="libraryGrid"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

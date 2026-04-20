@@ -1,0 +1,10 @@
+{
+  "name": "material-motion-studio",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Material Motion Studio for multi-project Figma motion guidelines.",
+  "scripts": {
+    "check": "node --check studio/app.js"
+  }
+}
+

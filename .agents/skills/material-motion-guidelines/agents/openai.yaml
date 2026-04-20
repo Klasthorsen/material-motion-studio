@@ -1,0 +1,4 @@
+interface:
+  display_name: "Material Motion Guidelines"
+  short_description: "Systematisk Material motion for design"
+  default_prompt: "Use $material-motion-guidelines to review a Figma flow and propose Material motion patterns."

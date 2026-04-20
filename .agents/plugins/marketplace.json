@@ -1,0 +1,20 @@
+{
+  "name": "material-motion-workspace",
+  "interface": {
+    "displayName": "Material Motion Workspace"
+  },
+  "plugins": [
+    {
+      "name": "material-motion-studio",
+      "source": {
+        "source": "local",
+        "path": "./plugins/material-motion-studio"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Design"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "apps": {
+    "motion-studio": {
+      "type": "web",
+      "entry": "../../index.html",
+      "label": "Motion Studio"
+    }
+  }
+}
