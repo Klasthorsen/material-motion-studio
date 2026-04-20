@@ -55,10 +55,18 @@
       </main>
 
       <aside class="inspector">
+        <section class="inspector-section mode-section">
+          <div class="mode-tabs" id="modeTabs">
+            <button data-mode="analyze" class="active">Analyze</button>
+            <button data-mode="tweak">Tweak</button>
+            <button data-mode="handoff">Handoff</button>
+          </div>
+        </section>
+
         <section class="inspector-section" id="screenSection">
           <div class="section-head">
             <div class="eyebrow">Screen Setup</div>
-            <button id="generateScreen" class="ghost small">Generate</button>
+            <button id="generateScreen" class="ghost small">Analyze screen</button>
           </div>
 
           <label for="screenName">Screen name</label>
@@ -75,14 +83,26 @@
 
           <div class="screen-help">
             1. Add a Figma link or upload an image.
-            2. Click Generate.
-            3. Review suggested child components and fine-tune their motion.
+            2. Click Analyze screen.
+            3. Review suggested child components and Material Motion 3 patterns.
+            4. Focus one component and fine-tune its motion.
           </div>
 
           <div class="inspector-actions">
             <button id="addChildComponent">Add component</button>
             <button id="focusScreen" class="ghost">Focus screen</button>
           </div>
+        </section>
+
+        <section class="inspector-section" id="screenAnalysisSection">
+          <div class="section-head">
+            <div class="eyebrow">Screen Analysis</div>
+            <button id="focusFirstComponent" class="ghost small">Focus first</button>
+          </div>
+          <div class="analysis-copy" id="screenAnalysisCopy">
+            Analyze the screen to create a component hierarchy and suggest Material Motion 3 patterns.
+          </div>
+          <div class="analysis-list" id="screenAnalysisList"></div>
         </section>
 
         <section class="inspector-section" id="componentSection">
@@ -147,10 +167,9 @@
 
           <label for="easing">Easing</label>
           <select id="easing">
-            <option value="cubic-bezier(0.4, 0, 0.2, 1)">Standard</option>
-            <option value="cubic-bezier(0, 0, 0.2, 1)">Enter</option>
-            <option value="cubic-bezier(0.4, 0, 1, 1)">Exit</option>
-            <option value="cubic-bezier(0.4, 0, 0.6, 1)">Sharp</option>
+            <option value="cubic-bezier(0.2, 0, 0, 1)">Standard</option>
+            <option value="cubic-bezier(0.05, 0.7, 0.1, 1)">Emphasized</option>
+            <option value="cubic-bezier(0.3, 0, 0.8, 0.15)">Emphasized accelerate</option>
           </select>
 
           <label for="distance">Move <span id="distanceValue">32 px</span></label>
@@ -166,7 +185,7 @@
           <input id="stagger" type="range" min="0" max="80" step="5" value="30">
         </section>
 
-        <section class="inspector-section">
+        <section class="inspector-section" id="rationaleSection">
           <div class="eyebrow">Rationale</div>
           <ul class="guidance-list" id="guidanceList"></ul>
         </section>
@@ -175,6 +194,42 @@
           <button id="saveComponent" class="primary">Save component</button>
           <button id="duplicateComponent">Duplicate</button>
         </div>
+        <div class="inspector-actions single-action">
+          <button id="deleteComponent" class="danger">Remove component</button>
+        </div>
+
+        <section class="inspector-section hidden" id="handoffSection">
+          <div class="section-head">
+            <div class="eyebrow">Handoff</div>
+            <button id="approveComponent" class="ghost small">Approve</button>
+          </div>
+
+          <label for="componentStatus">Status</label>
+          <select id="componentStatus">
+            <option value="unreviewed">Unreviewed</option>
+            <option value="reviewed">Reviewed</option>
+            <option value="approved">Approved</option>
+          </select>
+
+          <label for="componentPlatform">Platform</label>
+          <select id="componentPlatform">
+            <option value="web">Web</option>
+            <option value="ios">iOS</option>
+            <option value="android">Android</option>
+          </select>
+
+          <label for="reducedMotion">Reduced motion fallback</label>
+          <textarea id="reducedMotion" rows="3" placeholder="Describe how this component should behave in reduced motion mode."></textarea>
+
+          <label for="engineeringNotes">Engineering notes</label>
+          <textarea id="engineeringNotes" rows="5" placeholder="Implementation notes for engineering."></textarea>
+
+          <div class="eyebrow">Readable Spec</div>
+          <div class="handoff-spec" id="handoffReadable"></div>
+
+          <div class="eyebrow">JSON Spec</div>
+          <pre class="handoff-json" id="handoffJson"></pre>
+        </section>
       </aside>
     </div>
 
