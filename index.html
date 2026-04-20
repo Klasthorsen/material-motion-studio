@@ -10,26 +10,27 @@
     <div class="studio-shell">
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-top">
-          <button class="icon-button" id="toggleSidebar" aria-label="Toggle component list">☰</button>
+          <button class="icon-button" id="toggleSidebar" aria-label="Toggle hierarchy">☰</button>
           <div class="sidebar-title-wrap">
             <div class="eyebrow">Material Motion Studio</div>
-            <h1 class="sidebar-title">Components</h1>
+            <h1 class="sidebar-title">Screens</h1>
           </div>
         </div>
 
         <div class="sidebar-actions">
-          <button id="newComponent" class="primary">New</button>
-          <button id="importJson">Import JSON</button>
+          <button id="newScreen" class="primary">New</button>
+          <button id="importJson">Import</button>
         </div>
 
-        <div class="component-list" id="componentList"></div>
+        <div class="hierarchy-list" id="hierarchyList"></div>
       </aside>
 
       <main class="stage-area">
         <header class="stage-header">
           <div>
-            <div class="eyebrow">Focused Component</div>
-            <h2 id="componentTitle">Conversion KPI card</h2>
+            <div class="eyebrow" id="selectionKind">Screen</div>
+            <h2 id="stageTitle">Untitled screen</h2>
+            <p class="stage-subtitle" id="stageSubtitle">Add a Figma link or upload an image to generate components and Material Motion 3 suggestions.</p>
           </div>
 
           <div class="breakpoint-switcher" id="breakpointSwitcher">
@@ -43,15 +44,43 @@
           <div class="device-stage mobile" id="deviceStage">
             <div class="device-label" id="deviceLabel">Mobile preview</div>
             <div class="device-frame">
-              <div class="component-preview" id="componentPreview"></div>
+              <div class="stage-content" id="stageContent"></div>
             </div>
           </div>
         </section>
       </main>
 
       <aside class="inspector">
-        <section class="inspector-section">
-          <div class="eyebrow">Component</div>
+        <section class="inspector-section" id="screenSection">
+          <div class="section-head">
+            <div class="eyebrow">Screen Setup</div>
+            <button id="generateScreen" class="ghost small">Generate</button>
+          </div>
+
+          <label for="screenName">Screen name</label>
+          <input id="screenName" type="text" placeholder="Analytics overview">
+
+          <label for="screenFigmaUrl">Figma link</label>
+          <input id="screenFigmaUrl" type="text" placeholder="https://www.figma.com/design/...">
+
+          <label for="screenImage">Upload image</label>
+          <input id="screenImage" type="file" accept="image/*">
+
+          <label for="screenPrompt">Describe the screen</label>
+          <textarea id="screenPrompt" rows="5" placeholder="Describe what the screen contains and what kinds of motion relationships exist."></textarea>
+
+          <div class="inspector-actions">
+            <button id="addChildComponent">Add component</button>
+            <button id="focusScreen" class="ghost">Focus screen</button>
+          </div>
+        </section>
+
+        <section class="inspector-section" id="componentSection">
+          <div class="section-head">
+            <div class="eyebrow">Component</div>
+            <button id="playComponent" class="ghost small">Play</button>
+          </div>
+
           <label for="componentName">Name</label>
           <input id="componentName" type="text" placeholder="Conversion KPI card">
 
@@ -65,17 +94,29 @@
             <option value="dialog-sheet">Dialog or sheet</option>
           </select>
 
-          <label for="figmaUrl">Figma frame</label>
-          <input id="figmaUrl" type="text" placeholder="https://www.figma.com/design/...">
+          <label for="componentPrompt">Describe desired motion</label>
+          <textarea id="componentPrompt" rows="4" placeholder="Describe the motion for this component. All suggestions will stay grounded in Google Material Motion 3."></textarea>
 
-          <label for="sourceImage">Upload image</label>
-          <input id="sourceImage" type="file" accept="image/*">
-
-          <label for="prompt">Prompt</label>
-          <textarea id="prompt" rows="4" placeholder="Describe the desired motion tone and what changes between states."></textarea>
+          <label for="componentInteraction">Playable state</label>
+          <select id="componentInteraction">
+            <option value="enter">Enter</option>
+            <option value="loading">Loading</option>
+            <option value="hover">Hover</option>
+          </select>
         </section>
 
-        <section class="inspector-section">
+        <section class="inspector-section" id="analysisSection">
+          <div class="section-head">
+            <div class="eyebrow">Material 3 Analysis</div>
+            <button id="reanalyzeMotion" class="ghost small">Analyze</button>
+          </div>
+          <div class="analysis-copy">
+            All suggestions are always based on Google Material Motion 3.
+          </div>
+          <div class="analysis-list" id="analysisList"></div>
+        </section>
+
+        <section class="inspector-section" id="motionSection">
           <div class="section-head">
             <div class="eyebrow">Motion</div>
             <button id="recommendMotion" class="ghost small">Recommend</button>
@@ -121,7 +162,7 @@
         </section>
 
         <div class="inspector-actions">
-          <button id="saveComponent" class="primary">Save</button>
+          <button id="saveComponent" class="primary">Save component</button>
           <button id="duplicateComponent">Duplicate</button>
         </div>
       </aside>

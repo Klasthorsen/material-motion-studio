@@ -2,6 +2,10 @@
 
 This repo is a starting point for a shared Material motion system around Figma and analytics-style interfaces.
 
+## Motion Rule
+
+All motion analysis, recommendations, and default suggestions in the studio must always be based on Google Material Motion 3 patterns.
+
 ## What is included
 
 - `/.agents/skills/material-motion-guidelines/`
