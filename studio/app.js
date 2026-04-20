@@ -128,6 +128,7 @@ const els = {
   generateScreen: document.getElementById("generateScreen"),
   addChildComponent: document.getElementById("addChildComponent"),
   focusScreen: document.getElementById("focusScreen"),
+  deleteScreen: document.getElementById("deleteScreen"),
   screenAnalysisSection: document.getElementById("screenAnalysisSection"),
   screenAnalysisCopy: document.getElementById("screenAnalysisCopy"),
   screenAnalysisList: document.getElementById("screenAnalysisList"),
@@ -224,6 +225,36 @@ function createScreen(partial = {}) {
     generated: false,
     components: partial.components || []
   };
+}
+
+function ensureAtLeastOneScreen() {
+  if (!state.screens.length) {
+    const screen = createScreen({ name: "New screen 1" });
+    state.screens = [screen];
+    state.selected = {
+      kind: "screen",
+      screenId: screen.id,
+      componentId: null
+    };
+  }
+}
+
+function parseFigmaUrl(url) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.includes("figma.com")) return null;
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    const fileKey = parts[1] || "";
+    const nodeId = parsed.searchParams.get("node-id") || "";
+    return {
+      fileKey,
+      nodeId,
+      editorType: parts[0] || "design"
+    };
+  } catch {
+    return null;
+  }
 }
 
 function snapshotPreset(presetKey) {
@@ -575,11 +606,20 @@ function buildScreenAnalysis(screen) {
   const patterns = new Set(screen.components.map((component) => screenPrimarySuggestion(component).title));
   const states = new Set(screen.components.map((component) => component.interaction));
   const componentScope = screen.components.length <= 1 ? "single component" : "multiple components";
+  const figmaMeta = parseFigmaUrl(screen.figmaUrl);
 
   if (screen.sourceImageData) {
     notes.push("A source image is loaded, so the stage can show the screen visually while you place motion on its components.");
+  }
+
+  if (screen.sourceImageData && figmaMeta) {
+    notes.push("Both sources are active: the uploaded image is used as visual reference, and the Figma link is used as structured source metadata.");
+  } else if (figmaMeta) {
+    notes.push("A Figma link is linked as structured source metadata, but the studio cannot render the Figma frame visually here without an uploaded image.");
   } else if (screen.figmaUrl) {
-    notes.push("A Figma link is linked, but the studio cannot render the Figma frame visually here without an uploaded image.");
+    notes.push("A link is attached, but it could not be parsed as a Figma frame URL.");
+  } else if (!screen.sourceImageData) {
+    notes.push("No visual source image is loaded yet.");
   }
 
   if (text.includes("hover") || text.includes("mouse over")) {
@@ -601,6 +641,9 @@ function buildScreenAnalysis(screen) {
   if (screen.components.length) {
     notes.push(`Primary motion families on this screen: ${Array.from(patterns).join(", ")}.`);
     notes.push(`This analysis identifies ${componentScope} on the current screen.`);
+    if (figmaMeta?.fileKey) {
+      notes.push(`Figma file key detected: ${figmaMeta.fileKey}${figmaMeta.nodeId ? ` · node ${figmaMeta.nodeId}` : ""}.`);
+    }
   }
 
   return {
@@ -875,6 +918,7 @@ function renderOverlayButton(component, selected = false) {
 function renderStage() {
   const screen = currentScreen();
   const component = currentComponent();
+  const analyzeMode = state.mode === "analyze";
 
   if (state.selected.kind === "component" && component) {
     const sourceReference = screen.sourceImageData
@@ -927,6 +971,7 @@ function renderStage() {
       </div>
     `;
   } else {
+    const figmaMeta = parseFigmaUrl(screen.figmaUrl);
     const imageBlock = screen.sourceImageData
       ? `
         <div class="screen-source-stage">
@@ -936,14 +981,28 @@ function renderStage() {
       `
       : `
         <div class="source-summary">
-          <div class="source-summary-title">Screen analyzed from link and prompt</div>
-          <div class="source-summary-copy">A Figma link is attached, but there is no uploaded image to render visually in the stage. The generated HTML components below remain editable.</div>
+          <div class="source-summary-title">Link attached, but no visual source loaded</div>
+          <div class="source-summary-copy">The studio can keep the Figma link as reference, but it cannot visually recreate the actual screen from the link alone here.</div>
+          <div class="source-summary-copy">Upload a screenshot or image export from Figma if you want the real design to appear in the stage.</div>
+          ${figmaMeta?.fileKey ? `<div class="source-summary-copy">Detected file: ${escapeHtml(figmaMeta.fileKey)}${figmaMeta.nodeId ? ` · node ${escapeHtml(figmaMeta.nodeId)}` : ""}</div>` : ""}
+        </div>
+      `;
+    const generatedPreviewMarkup = analyzeMode
+      ? `
+        <div class="generated-previews-summary">
+          <div class="generated-previews-title">Detected components</div>
+          <div class="generated-previews-copy">The stage keeps your uploaded design as the primary reference. Open a component to preview and tweak its motion behavior.</div>
+        </div>
+      `
+      : `
+        <div class="generated-preview-stack">
+          ${screen.components.map((item) => componentMarkup(item, true)).join("")}
         </div>
       `;
     els.stageContent.innerHTML = `
-      <div class="screen-preview">
+      <div class="screen-preview source-first">
         ${imageBlock}
-        ${screen.components.map((item) => componentMarkup(item, true)).join("")}
+        ${generatedPreviewMarkup}
       </div>
     `;
   }
@@ -1383,6 +1442,22 @@ function removeComponent(screenId, componentId) {
   syncUI();
 }
 
+function removeScreen(screenId) {
+  state.screens = state.screens.filter((screen) => screen.id !== screenId);
+  ensureAtLeastOneScreen();
+
+  if (!state.screens.some((screen) => screen.id === state.selected.screenId)) {
+    state.selected = {
+      kind: "screen",
+      screenId: state.screens[0].id,
+      componentId: null
+    };
+  }
+
+  persistState();
+  syncUI();
+}
+
 function focusScreen() {
   selectScreen(currentScreen().id);
 }
@@ -1486,6 +1561,11 @@ function initialize() {
   els.showScreen.addEventListener("click", () => selectScreen(currentScreen().id));
   els.addChildComponent.addEventListener("click", addChildComponent);
   els.focusScreen.addEventListener("click", focusScreen);
+  els.deleteScreen.addEventListener("click", () => {
+    const screen = currentScreen();
+    if (!screen) return;
+    removeScreen(screen.id);
+  });
   els.focusFirstComponent.addEventListener("click", () => {
     const screen = currentScreen();
     if (screen.components[0]) {

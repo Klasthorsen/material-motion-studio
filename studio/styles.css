@@ -389,6 +389,7 @@ textarea {
   width: 100%;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  display: block;
 }
 
 .screen-source-stage {
@@ -462,6 +463,34 @@ textarea {
 .focus-reference {
   display: grid;
   gap: 12px;
+}
+
+.source-first {
+  align-content: start;
+}
+
+.generated-previews-summary {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  display: grid;
+  gap: 8px;
+}
+
+.generated-previews-title {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.generated-previews-copy {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.generated-preview-stack {
+  display: grid;
+  gap: 16px;
 }
 
 .focus-reference-head {
