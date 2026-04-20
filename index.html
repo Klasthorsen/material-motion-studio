@@ -31,12 +31,16 @@
             <div class="eyebrow" id="selectionKind">Screen</div>
             <h2 id="stageTitle">Untitled screen</h2>
             <p class="stage-subtitle" id="stageSubtitle">Add a Figma link or upload an image to generate components and Material Motion 3 suggestions.</p>
+            <div class="stage-status" id="stageStatus">Waiting for source</div>
           </div>
 
-          <div class="breakpoint-switcher" id="breakpointSwitcher">
-            <button data-breakpoint="mobile" class="active">Mobile</button>
-            <button data-breakpoint="tablet">Tablet</button>
-            <button data-breakpoint="desktop">Desktop</button>
+          <div class="stage-toolbar">
+            <button id="showScreen" class="ghost small">Show screen</button>
+            <div class="breakpoint-switcher" id="breakpointSwitcher">
+              <button data-breakpoint="mobile" class="active">Mobile</button>
+              <button data-breakpoint="tablet">Tablet</button>
+              <button data-breakpoint="desktop">Desktop</button>
+            </div>
           </div>
         </header>
 
@@ -68,6 +72,12 @@
 
           <label for="screenPrompt">Describe the screen</label>
           <textarea id="screenPrompt" rows="5" placeholder="Describe what the screen contains and what kinds of motion relationships exist."></textarea>
+
+          <div class="screen-help">
+            1. Add a Figma link or upload an image.
+            2. Click Generate.
+            3. Review suggested child components and fine-tune their motion.
+          </div>
 
           <div class="inspector-actions">
             <button id="addChildComponent">Add component</button>

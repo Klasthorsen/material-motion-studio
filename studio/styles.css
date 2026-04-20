@@ -210,6 +210,24 @@ textarea {
   max-width: 680px;
 }
 
+.stage-status {
+  display: inline-flex;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.stage-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .breakpoint-switcher {
   display: inline-grid;
   grid-auto-flow: column;
@@ -320,6 +338,33 @@ textarea {
   width: 100%;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.screen-help {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.source-summary {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  gap: 10px;
+}
+
+.source-summary-title {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.source-summary-copy {
+  color: var(--muted);
+  line-height: 1.5;
+  word-break: break-word;
 }
 
 .preview-surface {

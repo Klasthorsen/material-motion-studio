@@ -96,6 +96,8 @@ const els = {
   selectionKind: document.getElementById("selectionKind"),
   stageTitle: document.getElementById("stageTitle"),
   stageSubtitle: document.getElementById("stageSubtitle"),
+  stageStatus: document.getElementById("stageStatus"),
+  showScreen: document.getElementById("showScreen"),
   breakpointSwitcher: document.getElementById("breakpointSwitcher"),
   deviceStage: document.getElementById("deviceStage"),
   deviceLabel: document.getElementById("deviceLabel"),
@@ -623,10 +625,19 @@ function renderStage() {
       </div>
     `;
   } else if (!screen.generated) {
+    const sourceBlock = screen.sourceImageData
+      ? `<img class="screen-source-image" src="${screen.sourceImageData}" alt="${escapeHtml(screen.name)}">`
+      : `
+        <div class="source-summary">
+          <div class="source-summary-title">Figma source linked</div>
+          <div class="source-summary-copy">${escapeHtml(screen.figmaUrl)}</div>
+        </div>
+      `;
     els.stageContent.innerHTML = `
       <div class="empty-stage">
         <div class="empty-title">Ready to generate</div>
         <div class="empty-copy">The screen has a source. Click Generate to create HTML components and motion suggestions based on Google Material Motion 3.</div>
+        ${sourceBlock}
       </div>
     `;
   } else {
@@ -769,12 +780,20 @@ function renderStageHeader() {
     els.selectionKind.textContent = "Component focus";
     els.stageTitle.textContent = component.name;
     els.stageSubtitle.textContent = `Focused inside ${screen.name}.`;
+    els.stageStatus.textContent = `Editing ${component.interaction} motion`;
   } else {
     els.selectionKind.textContent = "Screen";
     els.stageTitle.textContent = screen.name;
-    els.stageSubtitle.textContent = screen.generated
-      ? `${screen.components.length} components on this screen.`
-      : "Add a Figma link or upload an image, then generate components and motion analysis.";
+    if (!screen.figmaUrl && !screen.sourceImageData) {
+      els.stageSubtitle.textContent = "Add a Figma link or upload an image, then generate components and motion analysis.";
+      els.stageStatus.textContent = "Waiting for source";
+    } else if (!screen.generated) {
+      els.stageSubtitle.textContent = "Your source is loaded. Generate to create HTML components and Google Material Motion 3 suggestions.";
+      els.stageStatus.textContent = "Ready to generate";
+    } else {
+      els.stageSubtitle.textContent = `${screen.components.length} components on this screen.`;
+      els.stageStatus.textContent = "Generated";
+    }
   }
 }
 
@@ -791,6 +810,11 @@ function generateScreen() {
 
   screen.components = inferComponentsForScreen(screen);
   screen.generated = true;
+  state.selected = {
+    kind: "component",
+    screenId: screen.id,
+    componentId: screen.components[0]?.id || null
+  };
   persistState();
   syncUI();
 }
@@ -948,6 +972,7 @@ function initialize() {
   els.newScreen.addEventListener("click", addEmptyScreen);
   els.importJson.addEventListener("click", importJson);
   els.generateScreen.addEventListener("click", generateScreen);
+  els.showScreen.addEventListener("click", () => selectScreen(currentScreen().id));
   els.addChildComponent.addEventListener("click", addChildComponent);
   els.focusScreen.addEventListener("click", focusScreen);
   els.screenImage.addEventListener("change", handleScreenImageUpload);
