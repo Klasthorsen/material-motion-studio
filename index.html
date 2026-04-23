@@ -7,11 +7,11 @@
     <link rel="stylesheet" href="./studio/styles.css">
   </head>
   <body>
-    <div class="studio-shell">
+    <div class="app-shell">
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-top">
-          <button class="icon-button" id="toggleSidebar" aria-label="Toggle hierarchy">☰</button>
-          <div class="sidebar-title-wrap">
+          <button class="icon-button" id="toggleSidebar" aria-label="Toggle screens">☰</button>
+          <div>
             <div class="eyebrow">Material Motion Studio</div>
             <h1 class="sidebar-title">Screens</h1>
           </div>
@@ -22,20 +22,24 @@
           <button id="importJson">Import</button>
         </div>
 
-        <div class="hierarchy-list" id="hierarchyList"></div>
+        <div class="screen-list" id="screenList"></div>
       </aside>
 
-      <main class="stage-area">
+      <main class="main-stage">
         <header class="stage-header">
           <div>
-            <div class="eyebrow" id="selectionKind">Screen</div>
-            <h2 id="stageTitle">Untitled screen</h2>
-            <p class="stage-subtitle" id="stageSubtitle">Add a Figma link or upload an image to generate components and Material Motion 3 suggestions.</p>
-            <div class="stage-status" id="stageStatus">Waiting for source</div>
+            <div class="eyebrow" id="stageEyebrow">Analyze</div>
+            <h2 id="stageTitle">New screen</h2>
+            <p class="stage-subtitle" id="stageSubtitle">Import a Figma link and/or a static design image to create a motion handoff.</p>
           </div>
 
           <div class="stage-toolbar">
-            <button id="showScreen" class="ghost small">Show screen</button>
+            <div class="mode-tabs" id="modeTabs">
+              <button data-mode="analyze" class="active">Analyze</button>
+              <button data-mode="confirm">Confirm</button>
+              <button data-mode="handoff">Handoff</button>
+            </div>
+
             <div class="breakpoint-switcher" id="breakpointSwitcher">
               <button data-breakpoint="mobile" class="active">Mobile</button>
               <button data-breakpoint="tablet">Tablet</button>
@@ -44,7 +48,7 @@
           </div>
         </header>
 
-        <section class="stage-canvas">
+        <section class="canvas-shell">
           <div class="device-stage mobile" id="deviceStage">
             <div class="device-label" id="deviceLabel">Mobile preview</div>
             <div class="device-frame">
@@ -55,22 +59,14 @@
       </main>
 
       <aside class="inspector">
-        <section class="inspector-section mode-section">
-          <div class="mode-tabs" id="modeTabs">
-            <button data-mode="analyze" class="active">Analyze</button>
-            <button data-mode="tweak">Tweak</button>
-            <button data-mode="handoff">Handoff</button>
-          </div>
-        </section>
-
-        <section class="inspector-section" id="screenSection">
+        <section class="panel-section" id="sourceSection">
           <div class="section-head">
-            <div class="eyebrow">Screen Setup</div>
-            <button id="generateScreen" class="ghost small">Analyze screen</button>
+            <div class="eyebrow">Source</div>
+            <button id="analyzeScreen" class="ghost small">Analyze screen</button>
           </div>
 
           <label for="screenName">Screen name</label>
-          <input id="screenName" type="text" placeholder="Analytics overview">
+          <input id="screenName" type="text" placeholder="TVM Home">
 
           <label for="screenFigmaUrl">Figma link</label>
           <input id="screenFigmaUrl" type="text" placeholder="https://www.figma.com/design/...">
@@ -78,85 +74,57 @@
           <label for="screenImage">Upload image</label>
           <input id="screenImage" type="file" accept="image/*">
 
-          <label for="screenPrompt">Describe the screen</label>
-          <textarea id="screenPrompt" rows="5" placeholder="Describe what the screen contains and what kinds of motion relationships exist."></textarea>
+          <label for="screenPrompt">Screen description</label>
+          <textarea id="screenPrompt" rows="5" placeholder="Describe what appears in the static design and which interactions matter."></textarea>
 
-          <div class="screen-help">
-            1. Add a Figma link or upload an image.
-            2. Click Analyze screen.
-            3. Review suggested child components and Material Motion 3 patterns.
-            4. Focus one component and fine-tune its motion.
+          <div class="helper-copy">
+            The image is the visual truth. The Figma link is metadata and handoff traceability.
           </div>
 
-          <div class="inspector-actions">
-            <button id="addChildComponent">Add component</button>
-            <button id="focusScreen" class="ghost">Focus screen</button>
-          </div>
-          <div class="inspector-actions single-action">
+          <div class="dual-actions">
             <button id="deleteScreen" class="danger">Remove screen</button>
+            <button id="resetAnalysis" class="ghost">Reset analysis</button>
           </div>
         </section>
 
-        <section class="inspector-section" id="screenAnalysisSection">
+        <section class="panel-section" id="analyzeSection">
           <div class="section-head">
-            <div class="eyebrow">Screen Analysis</div>
-            <button id="focusFirstComponent" class="ghost small">Focus first</button>
+            <div class="eyebrow">Component Detection</div>
+            <button id="addComponent" class="ghost small">Add component</button>
           </div>
-          <div class="analysis-copy" id="screenAnalysisCopy">
-            Analyze the screen to create a component hierarchy and suggest Material Motion 3 patterns.
+
+          <div class="helper-copy" id="analysisSummary">
+            Analyze the screen to generate semantic component suggestions before motion is assigned.
           </div>
-          <div class="analysis-list" id="screenAnalysisList"></div>
+
+          <div class="category-grid" id="categoryGrid"></div>
+          <div class="component-list" id="analysisList"></div>
         </section>
 
-        <section class="inspector-section" id="componentSection">
+        <section class="panel-section hidden" id="confirmSection">
           <div class="section-head">
-            <div class="eyebrow">Component</div>
-            <button id="playComponent" class="ghost small">Play</button>
+            <div class="eyebrow">Confirm Component</div>
+            <button id="playPrototype" class="ghost small">Play prototype</button>
           </div>
 
-          <label for="componentName">Name</label>
-          <input id="componentName" type="text" placeholder="Conversion KPI card">
+          <label for="componentName">Component name</label>
+          <input id="componentName" type="text" placeholder="Primary CTA">
 
-          <label for="componentType">Type</label>
-          <select id="componentType">
-            <option value="metric-card">Metric card</option>
-            <option value="chart-panel">Chart panel</option>
-            <option value="tab-panel">Tab panel</option>
-            <option value="filter-group">Filter group</option>
-            <option value="list-row">List row</option>
-            <option value="dialog-sheet">Dialog or sheet</option>
+          <label for="componentCategory">Category</label>
+          <select id="componentCategory"></select>
+
+          <label for="componentVerification">Verification</label>
+          <select id="componentVerification">
+            <option value="unverified">Unverified</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="needs-correction">Needs correction</option>
           </select>
 
-          <label for="componentPrompt">Describe desired motion</label>
-          <textarea id="componentPrompt" rows="4" placeholder="Describe the motion for this component. All suggestions will stay grounded in Google Material Motion 3."></textarea>
+          <label for="componentIntent">Motion intent</label>
+          <input id="componentIntent" type="text" placeholder="Utility feedback">
 
-          <label for="componentInteraction">Playable state</label>
-          <select id="componentInteraction">
-            <option value="enter">Enter</option>
-            <option value="loading">Loading</option>
-            <option value="hover">Hover</option>
-          </select>
-        </section>
-
-        <section class="inspector-section" id="analysisSection">
-          <div class="section-head">
-            <div class="eyebrow">Material 3 Analysis</div>
-            <button id="reanalyzeMotion" class="ghost small">Analyze</button>
-          </div>
-          <div class="analysis-copy">
-            All suggestions are always based on Google Material Motion 3.
-          </div>
-          <div class="analysis-list" id="analysisList"></div>
-        </section>
-
-        <section class="inspector-section" id="motionSection">
-          <div class="section-head">
-            <div class="eyebrow">Motion</div>
-            <button id="recommendMotion" class="ghost small">Recommend</button>
-          </div>
-
-          <label for="preset">Pattern</label>
-          <select id="preset">
+          <label for="componentPattern">Material pattern</label>
+          <select id="componentPattern">
             <option value="container-transform">Container transform</option>
             <option value="shared-axis-x">Shared axis X</option>
             <option value="shared-axis-z">Shared axis Z</option>
@@ -165,72 +133,48 @@
             <option value="micro-interaction">Micro interaction</option>
           </select>
 
-          <label for="duration">Duration <span id="durationValue">300 ms</span></label>
-          <input id="duration" type="range" min="120" max="450" step="5" value="300">
-
-          <label for="easing">Easing</label>
-          <select id="easing">
+          <label for="componentEasing">Easing</label>
+          <select id="componentEasing">
             <option value="cubic-bezier(0.2, 0, 0, 1)">Standard</option>
             <option value="cubic-bezier(0.05, 0.7, 0.1, 1)">Emphasized</option>
             <option value="cubic-bezier(0.3, 0, 0.8, 0.15)">Emphasized accelerate</option>
           </select>
 
-          <label for="distance">Move <span id="distanceValue">32 px</span></label>
-          <input id="distance" type="range" min="0" max="72" step="2" value="32">
+          <label for="componentDuration">Duration (ms)</label>
+          <input id="componentDuration" type="number" min="120" max="450" step="5">
 
-          <label for="scale">Scale <span id="scaleValue">0.94</span></label>
-          <input id="scale" type="range" min="0.85" max="1" step="0.01" value="0.94">
+          <label for="componentDelay">Delay / stagger (ms)</label>
+          <input id="componentDelay" type="number" min="0" max="400" step="5">
 
-          <label for="opacity">Opacity start <span id="opacityValue">0.00</span></label>
-          <input id="opacity" type="range" min="0" max="1" step="0.05" value="0">
+          <label for="componentTrigger">Trigger</label>
+          <input id="componentTrigger" type="text" placeholder="hover, pressed">
 
-          <label for="stagger">Stagger <span id="staggerValue">30 ms</span></label>
-          <input id="stagger" type="range" min="0" max="80" step="5" value="30">
-        </section>
-
-        <section class="inspector-section" id="rationaleSection">
-          <div class="eyebrow">Rationale</div>
-          <ul class="guidance-list" id="guidanceList"></ul>
-        </section>
-
-        <div class="inspector-actions">
-          <button id="saveComponent" class="primary">Save component</button>
-          <button id="duplicateComponent">Duplicate</button>
-        </div>
-        <div class="inspector-actions single-action">
-          <button id="deleteComponent" class="danger">Remove component</button>
-        </div>
-
-        <section class="inspector-section hidden" id="handoffSection">
-          <div class="section-head">
-            <div class="eyebrow">Handoff</div>
-            <button id="approveComponent" class="ghost small">Approve</button>
-          </div>
-
-          <label for="componentStatus">Status</label>
-          <select id="componentStatus">
-            <option value="unreviewed">Unreviewed</option>
-            <option value="reviewed">Reviewed</option>
-            <option value="approved">Approved</option>
-          </select>
-
-          <label for="componentPlatform">Platform</label>
-          <select id="componentPlatform">
-            <option value="web">Web</option>
-            <option value="ios">iOS</option>
-            <option value="android">Android</option>
-          </select>
+          <label for="componentStates">States</label>
+          <input id="componentStates" type="text" placeholder="idle, hover, pressed">
 
           <label for="reducedMotion">Reduced motion fallback</label>
-          <textarea id="reducedMotion" rows="3" placeholder="Describe how this component should behave in reduced motion mode."></textarea>
+          <textarea id="reducedMotion" rows="3" placeholder="Describe the reduced motion version."></textarea>
 
           <label for="engineeringNotes">Engineering notes</label>
-          <textarea id="engineeringNotes" rows="5" placeholder="Implementation notes for engineering."></textarea>
+          <textarea id="engineeringNotes" rows="4" placeholder="Implementation notes for developers."></textarea>
 
-          <div class="eyebrow">Readable Spec</div>
-          <div class="handoff-spec" id="handoffReadable"></div>
+          <div class="dual-actions">
+            <button id="saveComponent" class="primary">Save component</button>
+            <button id="deleteComponent" class="danger">Remove component</button>
+          </div>
+        </section>
 
-          <div class="eyebrow">JSON Spec</div>
+        <section class="panel-section hidden" id="handoffSection">
+          <div class="section-head">
+            <div class="eyebrow">Handoff</div>
+            <button id="copyJson" class="ghost small">Copy JSON</button>
+          </div>
+
+          <div class="helper-copy" id="handoffSummary">
+            Confirm components before handoff. Only confirmed components appear in export.
+          </div>
+
+          <div class="handoff-readable" id="handoffReadable"></div>
           <pre class="handoff-json" id="handoffJson"></pre>
         </section>
       </aside>

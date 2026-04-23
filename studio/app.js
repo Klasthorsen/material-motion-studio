@@ -1,176 +1,136 @@
-const STORAGE_KEY = "material-motion-studio-hierarchy-v2";
+const STORAGE_KEY = "material-motion-studio-semantic-v1";
 
-const presets = {
-  "container-transform": {
-    label: "Container transform",
-    duration: 320,
-    easing: "cubic-bezier(0.05, 0.7, 0.1, 1)",
-    distance: 0,
-    scale: 0.92,
-    opacity: 0.08,
-    stagger: 20,
-    guidance: [
-      "Use when one surface becomes another.",
-      "Best for cards opening richer detail.",
-      "Strongest continuity pattern in Material Motion 3."
-    ]
+const categoryCatalog = {
+  button: {
+    label: "Button",
+    intent: "Utility feedback",
+    pattern: "micro-interaction",
+    easing: "cubic-bezier(0.2, 0, 0, 1)",
+    duration: 180,
+    delay: 0,
+    trigger: "hover, pressed",
+    states: ["idle", "hover", "pressed", "disabled"],
+    reducedMotion: "Remove scale changes. Keep only a subtle opacity or color feedback.",
+    engineeringNotes: "Use a short utility interaction. Keep surrounding layout stable.",
+    prototype: "button"
   },
-  "shared-axis-x": {
-    label: "Shared axis X",
+  "page-transition": {
+    label: "Page transition",
+    intent: "Hierarchy or sibling navigation",
+    pattern: "shared-axis-x",
+    easing: "cubic-bezier(0.2, 0, 0, 1)",
+    duration: 300,
+    delay: 0,
+    trigger: "route change, open detail, back",
+    states: ["leaving", "entering", "arrived"],
+    reducedMotion: "Reduce spatial travel. Prefer fade or shorter shared axis movement.",
+    engineeringNotes: "Choose shared axis X for sibling views, shared axis Z for hierarchy, container transform when one surface becomes another.",
+    prototype: "page"
+  },
+  "show-hide-menu": {
+    label: "Show/hide menu",
+    intent: "Reveal or dismiss navigation surface",
+    pattern: "fade",
+    easing: "cubic-bezier(0.2, 0, 0, 1)",
+    duration: 220,
+    delay: 0,
+    trigger: "open, close",
+    states: ["hidden", "entering", "visible", "exiting"],
+    reducedMotion: "Use fade only. Avoid large shifts in position.",
+    engineeringNotes: "Use fade for lightweight menus and container transform only if the menu emerges from a related surface.",
+    prototype: "menu"
+  },
+  "scroll-appear": {
+    label: "Scroll appear",
+    intent: "Progressive reveal on scroll",
+    pattern: "fade",
+    easing: "cubic-bezier(0.2, 0, 0, 1)",
+    duration: 200,
+    delay: 40,
+    trigger: "enters viewport",
+    states: ["offscreen", "entering", "visible"],
+    reducedMotion: "Keep opacity change only or remove reveal entirely.",
+    engineeringNotes: "Keep movement subtle. Prefer opacity and small translate while preserving stable page chrome.",
+    prototype: "scroll"
+  },
+  carousel: {
+    label: "Carousel",
+    intent: "Sibling continuity",
+    pattern: "shared-axis-x",
+    easing: "cubic-bezier(0.2, 0, 0, 1)",
     duration: 280,
-    easing: "cubic-bezier(0.2, 0, 0, 1)",
-    distance: 36,
-    scale: 0.98,
-    opacity: 0,
-    stagger: 30,
-    guidance: [
-      "Use for sibling views.",
-      "Best for tabs and side-by-side modes.",
-      "Horizontal travel should stay modest."
-    ]
-  },
-  "shared-axis-z": {
-    label: "Shared axis Z",
-    duration: 290,
-    easing: "cubic-bezier(0.05, 0.7, 0.1, 1)",
-    distance: 0,
-    scale: 0.9,
-    opacity: 0,
-    stagger: 24,
-    guidance: [
-      "Use for drill-down and hierarchy.",
-      "Scale and fade communicates depth.",
-      "Strong fit for charts and detail views."
-    ]
-  },
-  "fade-through": {
-    label: "Fade through",
-    duration: 210,
-    easing: "cubic-bezier(0.2, 0, 0, 1)",
-    distance: 0,
-    scale: 0.96,
-    opacity: 0,
-    stagger: 35,
-    guidance: [
-      "Use for content replacement.",
-      "Best for filter and period changes.",
-      "Keeps shell stable while content swaps."
-    ]
-  },
-  "fade": {
-    label: "Fade",
-    duration: 190,
-    easing: "cubic-bezier(0.2, 0, 0, 1)",
-    distance: 0,
-    scale: 0.98,
-    opacity: 0,
-    stagger: 10,
-    guidance: [
-      "Use for lightweight overlay or appearance.",
-      "Good for small focus shifts.",
-      "Keep surrounding layout still."
-    ]
-  },
-  "micro-interaction": {
-    label: "Micro interaction",
-    duration: 170,
-    easing: "cubic-bezier(0.2, 0, 0, 1)",
-    distance: 8,
-    scale: 0.97,
-    opacity: 0.3,
-    stagger: 0,
-    guidance: [
-      "Use for hover, pressed, and selection.",
-      "Keep it subtle and short.",
-      "Treat it as utility motion, not scene transition."
-    ]
+    delay: 0,
+    trigger: "swipe, tap arrows, auto advance",
+    states: ["active", "leaving", "entering-sibling"],
+    reducedMotion: "Remove travel-heavy motion. Use a fast crossfade or snap with subtle opacity.",
+    engineeringNotes: "Treat items as sibling surfaces and keep direction consistent.",
+    prototype: "carousel"
   }
 };
 
-const easingProfiles = {
-  "cubic-bezier(0.2, 0, 0, 1)": {
-    label: "Standard",
-    value: "cubic-bezier(0.2, 0, 0, 1)",
-    use: "Use for most component motion, list movement, carousels, and recurring transitions."
-  },
-  "cubic-bezier(0.05, 0.7, 0.1, 1)": {
-    label: "Emphasized",
-    value: "cubic-bezier(0.05, 0.7, 0.1, 1)",
-    use: "Use when a primary surface deserves stronger arrival and focus."
-  },
-  "cubic-bezier(0.3, 0, 0.8, 0.15)": {
-    label: "Emphasized accelerate",
-    value: "cubic-bezier(0.3, 0, 0.8, 0.15)",
-    use: "Use when a surface leaves quickly, such as dismiss, swipe away, or exit."
-  }
+const patternLabels = {
+  "container-transform": "Container transform",
+  "shared-axis-x": "Shared axis X",
+  "shared-axis-z": "Shared axis Z",
+  "fade-through": "Fade through",
+  fade: "Fade",
+  "micro-interaction": "Micro interaction"
+};
+
+const easingLabels = {
+  "cubic-bezier(0.2, 0, 0, 1)": "Standard",
+  "cubic-bezier(0.05, 0.7, 0.1, 1)": "Emphasized",
+  "cubic-bezier(0.3, 0, 0.8, 0.15)": "Emphasized accelerate"
 };
 
 const els = {
   sidebar: document.getElementById("sidebar"),
   toggleSidebar: document.getElementById("toggleSidebar"),
-  hierarchyList: document.getElementById("hierarchyList"),
+  screenList: document.getElementById("screenList"),
   newScreen: document.getElementById("newScreen"),
   importJson: document.getElementById("importJson"),
-  selectionKind: document.getElementById("selectionKind"),
+  stageEyebrow: document.getElementById("stageEyebrow"),
   stageTitle: document.getElementById("stageTitle"),
   stageSubtitle: document.getElementById("stageSubtitle"),
-  stageStatus: document.getElementById("stageStatus"),
-  showScreen: document.getElementById("showScreen"),
+  modeTabs: document.getElementById("modeTabs"),
   breakpointSwitcher: document.getElementById("breakpointSwitcher"),
   deviceStage: document.getElementById("deviceStage"),
   deviceLabel: document.getElementById("deviceLabel"),
   stageContent: document.getElementById("stageContent"),
-  screenSection: document.getElementById("screenSection"),
+  sourceSection: document.getElementById("sourceSection"),
+  analyzeSection: document.getElementById("analyzeSection"),
+  confirmSection: document.getElementById("confirmSection"),
+  handoffSection: document.getElementById("handoffSection"),
   screenName: document.getElementById("screenName"),
   screenFigmaUrl: document.getElementById("screenFigmaUrl"),
   screenImage: document.getElementById("screenImage"),
   screenPrompt: document.getElementById("screenPrompt"),
-  generateScreen: document.getElementById("generateScreen"),
-  addChildComponent: document.getElementById("addChildComponent"),
-  focusScreen: document.getElementById("focusScreen"),
+  analyzeScreen: document.getElementById("analyzeScreen"),
   deleteScreen: document.getElementById("deleteScreen"),
-  screenAnalysisSection: document.getElementById("screenAnalysisSection"),
-  screenAnalysisCopy: document.getElementById("screenAnalysisCopy"),
-  screenAnalysisList: document.getElementById("screenAnalysisList"),
-  focusFirstComponent: document.getElementById("focusFirstComponent"),
-  componentSection: document.getElementById("componentSection"),
-  componentName: document.getElementById("componentName"),
-  componentType: document.getElementById("componentType"),
-  componentPrompt: document.getElementById("componentPrompt"),
-  componentInteraction: document.getElementById("componentInteraction"),
-  playComponent: document.getElementById("playComponent"),
-  analysisSection: document.getElementById("analysisSection"),
+  resetAnalysis: document.getElementById("resetAnalysis"),
+  categoryGrid: document.getElementById("categoryGrid"),
+  analysisSummary: document.getElementById("analysisSummary"),
   analysisList: document.getElementById("analysisList"),
-  reanalyzeMotion: document.getElementById("reanalyzeMotion"),
-  motionSection: document.getElementById("motionSection"),
-  preset: document.getElementById("preset"),
-  duration: document.getElementById("duration"),
-  easing: document.getElementById("easing"),
-  distance: document.getElementById("distance"),
-  scale: document.getElementById("scale"),
-  opacity: document.getElementById("opacity"),
-  stagger: document.getElementById("stagger"),
-  durationValue: document.getElementById("durationValue"),
-  distanceValue: document.getElementById("distanceValue"),
-  scaleValue: document.getElementById("scaleValue"),
-  opacityValue: document.getElementById("opacityValue"),
-  staggerValue: document.getElementById("staggerValue"),
-  guidanceList: document.getElementById("guidanceList"),
-  recommendMotion: document.getElementById("recommendMotion"),
-  saveComponent: document.getElementById("saveComponent"),
-  duplicateComponent: document.getElementById("duplicateComponent"),
-  deleteComponent: document.getElementById("deleteComponent")
-  ,
-  modeTabs: document.getElementById("modeTabs"),
-  rationaleSection: document.getElementById("rationaleSection"),
-  handoffSection: document.getElementById("handoffSection"),
-  componentStatus: document.getElementById("componentStatus"),
-  componentPlatform: document.getElementById("componentPlatform"),
+  addComponent: document.getElementById("addComponent"),
+  componentName: document.getElementById("componentName"),
+  componentCategory: document.getElementById("componentCategory"),
+  componentVerification: document.getElementById("componentVerification"),
+  componentIntent: document.getElementById("componentIntent"),
+  componentPattern: document.getElementById("componentPattern"),
+  componentEasing: document.getElementById("componentEasing"),
+  componentDuration: document.getElementById("componentDuration"),
+  componentDelay: document.getElementById("componentDelay"),
+  componentTrigger: document.getElementById("componentTrigger"),
+  componentStates: document.getElementById("componentStates"),
   reducedMotion: document.getElementById("reducedMotion"),
   engineeringNotes: document.getElementById("engineeringNotes"),
+  saveComponent: document.getElementById("saveComponent"),
+  deleteComponent: document.getElementById("deleteComponent"),
+  playPrototype: document.getElementById("playPrototype"),
+  handoffSummary: document.getElementById("handoffSummary"),
   handoffReadable: document.getElementById("handoffReadable"),
   handoffJson: document.getElementById("handoffJson"),
-  approveComponent: document.getElementById("approveComponent")
+  copyJson: document.getElementById("copyJson")
 };
 
 const state = loadState();
@@ -181,19 +141,52 @@ function defaultState() {
     sidebarCollapsed: false,
     mode: "analyze",
     breakpoint: "mobile",
-    selected: {
-      kind: "screen",
-      screenId: screen.id,
-      componentId: null
-    },
+    selectedScreenId: screen.id,
+    selectedComponentId: null,
     screens: [screen]
+  };
+}
+
+function createScreen(partial = {}) {
+  return {
+    id: `screen-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`,
+    name: partial.name || "New screen",
+    figmaUrl: partial.figmaUrl || "",
+    sourceImageData: partial.sourceImageData || "",
+    prompt: partial.prompt || "",
+    handoffReady: false,
+    components: partial.components || []
+  };
+}
+
+function createComponent(categoryKey, partial = {}) {
+  const base = categoryCatalog[categoryKey];
+  return {
+    id: `component-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`,
+    name: partial.name || base.label,
+    category: categoryKey,
+    verificationStatus: partial.verificationStatus || "unverified",
+    intent: partial.intent || base.intent,
+    pattern: partial.pattern || base.pattern,
+    easing: partial.easing || base.easing,
+    duration: partial.duration ?? base.duration,
+    delay: partial.delay ?? base.delay,
+    trigger: partial.trigger || base.trigger,
+    states: partial.states || [...base.states],
+    reducedMotion: partial.reducedMotion || base.reducedMotion,
+    engineeringNotes: partial.engineeringNotes || base.engineeringNotes,
+    prototype: partial.prototype || base.prototype,
+    sourceLabel: partial.sourceLabel || "Suggested from static design"
   };
 }
 
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : defaultState();
+    if (!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    if (!parsed.screens?.length) return defaultState();
+    return parsed;
   } catch {
     return defaultState();
   }
@@ -203,40 +196,13 @@ function persistState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-function slugify(value) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+function currentScreen() {
+  return state.screens.find((screen) => screen.id === state.selectedScreenId) || state.screens[0];
 }
 
-function createScreen(partial = {}) {
-  const name = partial.name || `New screen ${Date.now().toString(36)}`;
-  return {
-    id: `${slugify(name)}-${Date.now().toString(36)}`,
-    name,
-    figmaUrl: partial.figmaUrl || "",
-    sourceImageData: partial.sourceImageData || "",
-    prompt: partial.prompt || "",
-    analysisSummary: partial.analysisSummary || "",
-    analysisOverview: partial.analysisOverview || "",
-    analysisNotes: partial.analysisNotes || [],
-    generated: false,
-    components: partial.components || []
-  };
-}
-
-function ensureAtLeastOneScreen() {
-  if (!state.screens.length) {
-    const screen = createScreen({ name: "New screen 1" });
-    state.screens = [screen];
-    state.selected = {
-      kind: "screen",
-      screenId: screen.id,
-      componentId: null
-    };
-  }
+function currentComponent() {
+  const screen = currentScreen();
+  return screen.components.find((component) => component.id === state.selectedComponentId) || null;
 }
 
 function parseFigmaUrl(url) {
@@ -245,50 +211,22 @@ function parseFigmaUrl(url) {
     const parsed = new URL(url);
     if (!parsed.hostname.includes("figma.com")) return null;
     const parts = parsed.pathname.split("/").filter(Boolean);
-    const fileKey = parts[1] || "";
-    const nodeId = parsed.searchParams.get("node-id") || "";
     return {
-      fileKey,
-      nodeId,
-      editorType: parts[0] || "design"
+      fileKey: parts[1] || "",
+      nodeId: parsed.searchParams.get("node-id") || ""
     };
   } catch {
     return null;
   }
 }
 
-function snapshotPreset(presetKey) {
-  const preset = presets[presetKey];
-  return {
-    duration: preset.duration,
-    easing: preset.easing,
-    distance: preset.distance,
-    scale: preset.scale,
-    opacity: preset.opacity,
-    stagger: preset.stagger
-  };
-}
-
-function createComponent(partial = {}) {
-  const prompt = partial.prompt || "";
-  const type = partial.type || "metric-card";
-  const presetKey = partial.preset || recommendPreset({ type, prompt });
-  return {
-    id: `${slugify(partial.name || type)}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`,
-    name: partial.name || "New component",
-    type,
-    prompt,
-    interaction: partial.interaction || "enter",
-    frame: partial.frame || null,
-    preset: presetKey,
-    analysis: buildMotionAnalysis({ type, prompt }),
-    motion: snapshotPreset(presetKey)
-    ,
-    status: partial.status || "unreviewed",
-    platform: partial.platform || "web",
-    reducedMotion: partial.reducedMotion || "Reduce scale and travel. Keep opacity changes subtle and preserve hierarchy without large transforms.",
-    engineeringNotes: partial.engineeringNotes || ""
-  };
+function ensureAtLeastOneScreen() {
+  if (!state.screens.length) {
+    const screen = createScreen({ name: "New screen 1" });
+    state.screens = [screen];
+    state.selectedScreenId = screen.id;
+    state.selectedComponentId = null;
+  }
 }
 
 function setMode(mode) {
@@ -297,1002 +235,48 @@ function setMode(mode) {
   syncUI();
 }
 
-function statusLabel(status) {
-  return {
-    unreviewed: "Unreviewed",
-    reviewed: "Reviewed",
-    approved: "Approved"
-  }[status] || "Unreviewed";
-}
-
-function screenWorkflowStatus(screen) {
-  if (!screen.generated || !screen.components.length) return "Structure";
-  const statuses = screen.components.map((component) => component.status || "unreviewed");
-  if (statuses.every((status) => status === "approved")) return "Ready";
-  if (statuses.some((status) => status === "reviewed" || status === "approved")) return "In progress";
-  return "Analyzed";
-}
-
-function inferComponentFrames(components) {
-  const mobileFrames = {
-    "metric-card": { x: 6, y: 8, w: 88, h: 18 },
-    "chart-panel": { x: 6, y: 30, w: 88, h: 30 },
-    "filter-group": { x: 6, y: 66, w: 88, h: 12 },
-    "tab-panel": { x: 6, y: 14, w: 88, h: 14 },
-    "list-row": { x: 6, y: 48, w: 88, h: 28 },
-    "dialog-sheet": { x: 10, y: 54, w: 80, h: 26 }
-  };
-
-  const fallbackY = [8, 28, 50, 70];
-
-  return components.map((component, index) => ({
-    ...component,
-    frame: component.frame || mobileFrames[component.type] || {
-      x: 8,
-      y: fallbackY[index] || Math.min(76, 8 + index * 18),
-      w: 84,
-      h: 16
-    }
-  }));
-}
-
-function currentScreen() {
-  return state.screens.find((screen) => screen.id === state.selected.screenId) || state.screens[0];
-}
-
-function currentComponent() {
-  if (state.selected.kind !== "component") return null;
-  const screen = currentScreen();
-  return screen?.components.find((component) => component.id === state.selected.componentId) || null;
+function setBreakpoint(breakpoint) {
+  state.breakpoint = breakpoint;
+  persistState();
+  renderBreakpoint();
 }
 
 function selectScreen(screenId) {
-  state.selected = { kind: "screen", screenId, componentId: null };
+  state.selectedScreenId = screenId;
+  state.selectedComponentId = null;
   persistState();
   syncUI();
 }
 
-function selectComponent(screenId, componentId) {
-  state.selected = { kind: "component", screenId, componentId };
+function selectComponent(componentId) {
+  state.selectedComponentId = componentId;
   persistState();
   syncUI();
 }
 
-function recommendPreset(component) {
-  return buildMotionAnalysis(component)[0].preset;
+function helperCategories() {
+  return Object.entries(categoryCatalog).map(([key, value]) => ({ key, ...value }));
 }
 
-function buildMotionAnalysis(component) {
-  const prompt = `${component.prompt || ""} ${component.type || ""}`.toLowerCase();
-  const suggestions = [];
-
-  if (component.type === "metric-card") {
-    suggestions.push({
-      preset: "container-transform",
-      title: "Container transform",
-      reason: "Google Material Motion 3 recommends container transform when one surface becomes another, which fits a KPI card expanding into detail.",
-      strength: 95
-    });
-    suggestions.push({
-      preset: "shared-axis-z",
-      title: "Shared axis Z",
-      reason: "Use shared axis Z when the KPI leads deeper into hierarchy rather than morphing directly into a new surface.",
-      strength: 76
-    });
-  }
-
-  if (component.type === "chart-panel") {
-    suggestions.push({
-      preset: "shared-axis-z",
-      title: "Shared axis Z",
-      reason: "Google Material Motion 3 uses shared axis Z for drill-in and hierarchy changes, which matches charts moving into focused analysis.",
-      strength: 92
-    });
-    suggestions.push({
-      preset: "container-transform",
-      title: "Container transform",
-      reason: "Choose container transform when the chart itself morphs into the destination surface instead of just navigating deeper.",
-      strength: 78
-    });
-  }
-
-  if (component.type === "tab-panel") {
-    suggestions.push({
-      preset: "shared-axis-x",
-      title: "Shared axis X",
-      reason: "Google Material Motion 3 shared axis X is built for sibling views, which is the clearest fit for tab transitions.",
-      strength: 94
-    });
-    suggestions.push({
-      preset: "fade-through",
-      title: "Fade through",
-      reason: "Fade through is a fallback when the content behaves more like replacement than spatial tab movement.",
-      strength: 63
-    });
-  }
-
-  if (component.type === "filter-group") {
-    suggestions.push({
-      preset: "fade-through",
-      title: "Fade through",
-      reason: "Google Material Motion 3 uses fade through for replacing outgoing content with incoming content when spatial continuity is weak, which fits filter swaps.",
-      strength: 96
-    });
-    suggestions.push({
-      preset: "fade",
-      title: "Fade",
-      reason: "Fade can support smaller state changes, but fade through is the stronger Material 3 default for content replacement.",
-      strength: 57
-    });
-  }
-
-  if (component.type === "list-row") {
-    suggestions.push({
-      preset: "container-transform",
-      title: "Container transform",
-      reason: "If the row opens into detail, container transform gives the strongest continuity between list and destination.",
-      strength: 82
-    });
-    suggestions.push({
-      preset: "fade",
-      title: "Fade",
-      reason: "Fade works when the row only appears or dismisses within the same screen.",
-      strength: 58
-    });
-  }
-
-  if (component.type === "dialog-sheet") {
-    suggestions.push({
-      preset: "fade",
-      title: "Fade",
-      reason: "Google Material Motion 3 fade suits lightweight overlays and focused surfaces entering the current screen.",
-      strength: 84
-    });
-    suggestions.push({
-      preset: "micro-interaction",
-      title: "Micro interaction",
-      reason: "Use a shorter interaction only if the sheet behaves more like a quick inline state.",
-      strength: 49
-    });
-  }
-
-  if (prompt.includes("hover") || prompt.includes("pressed") || prompt.includes("mouse over")) {
-    suggestions.unshift({
-      preset: "micro-interaction",
-      title: "Micro interaction",
-      reason: "Your description points to a recurring utility state, which Google Material Motion 3 treats as micro interaction rather than a scene transition.",
-      strength: 97
-    });
-  }
-
-  if (prompt.includes("loading") || prompt.includes("replace") || prompt.includes("swap")) {
-    suggestions.unshift({
-      preset: "fade-through",
-      title: "Fade through",
-      reason: "Your description points to replacement or loading content, which aligns with Google Material Motion 3 fade through.",
-      strength: 95
-    });
-  }
-
-  if (prompt.includes("tab") || prompt.includes("sibling")) {
-    suggestions.unshift({
-      preset: "shared-axis-x",
-      title: "Shared axis X",
-      reason: "Your description suggests sibling navigation, which is the canonical Material Motion 3 use case for shared axis X.",
-      strength: 95
-    });
-  }
-
-  if (prompt.includes("drill") || prompt.includes("detail") || prompt.includes("deeper")) {
-    suggestions.unshift({
-      preset: "shared-axis-z",
-      title: "Shared axis Z",
-      reason: "Your description suggests deeper hierarchy, which aligns with Google Material Motion 3 shared axis Z.",
-      strength: 96
-    });
-  }
-
-  if (prompt.includes("grow") || prompt.includes("expand") || prompt.includes("becomes")) {
-    suggestions.unshift({
-      preset: "container-transform",
-      title: "Container transform",
-      reason: "Your description says one surface becomes another, which is the primary Material Motion 3 container transform case.",
-      strength: 98
-    });
-  }
-
-  if (!suggestions.length) {
-    suggestions.push({
-      preset: "container-transform",
-      title: "Container transform",
-      reason: "Default to the strongest Material Motion 3 continuity pattern when the component likely opens into richer detail.",
-      strength: 70
-    });
-  }
-
-  const deduped = [];
-  const seen = new Set();
-  suggestions
-    .sort((a, b) => b.strength - a.strength)
-    .forEach((item) => {
-      if (!seen.has(item.preset)) {
-        seen.add(item.preset);
-        deduped.push(item);
-      }
-    });
-
-  return deduped.slice(0, 3);
-}
-
-function inferComponentsForScreen(screen) {
-  const text = `${screen.name} ${screen.prompt}`.toLowerCase();
-  const blueprints = [];
-
-  const pushUnique = (name, type, prompt, interaction = "enter") => {
-    if (!blueprints.some((item) => item.name === name)) {
-      blueprints.push({ name, type, prompt, interaction });
-    }
-  };
-
-  if (text.includes("hero") || text.includes("banner") || text.includes("featured")) {
-    pushUnique("Hero card", "metric-card", "Primary focal surface with a strong entrance that can expand into richer detail.");
-  }
-
-  if (text.includes("kpi") || text.includes("summary") || text.includes("stat")) {
-    pushUnique("Summary KPI", "metric-card", "A summary card that becomes a detailed panel.");
-  }
-
-  if (text.includes("chart") || text.includes("graph") || text.includes("trend")) {
-    pushUnique("Trend chart", "chart-panel", "A chart that can drill into deeper detail.");
-  }
-
-  if (text.includes("carousel") || text.includes("rail") || text.includes("thumbnails") || text.includes("trending")) {
-    pushUnique("Content carousel", "tab-panel", "Swipe or move between sibling items with clear spatial continuity.");
-  }
-
-  if (text.includes("sport") || text.includes("upcoming games")) {
-    pushUnique("Sports rail", "tab-panel", "A sibling carousel for upcoming events with directional continuity.");
-  }
-
-  if (text.includes("filter") || text.includes("segment") || text.includes("date range")) {
-    pushUnique("Period filters", "filter-group", "Change the visible dataset between date ranges.");
-  }
-
-  if (text.includes("table") || text.includes("list") || text.includes("themes") || text.includes("menu")) {
-    pushUnique("List items", "list-row", "Rows that can enter softly and open into detail.");
-  }
-
-  if (text.includes("tab") || text.includes("bottom nav") || text.includes("navigation")) {
-    pushUnique("Bottom navigation", "tab-panel", "Switch between sibling views with clear spatial continuity and a strong indicator.");
-  }
-
-  if (text.includes("dialog") || text.includes("modal") || text.includes("sheet")) {
-    pushUnique("Overlay sheet", "dialog-sheet", "A focused overlay surface entering above the current screen.");
-  }
-
-  if (text.includes("button") || text.includes("cta")) {
-    pushUnique("Primary CTA", "metric-card", "A focal interactive surface with emphasis on hover or pressed feedback.", "hover");
-  }
-
-  const explicitlySingle = [
-    "single component",
-    "one component",
-    "single card",
-    "one card",
-    "single button",
-    "modal",
-    "dialog",
-    "sheet"
-  ].some((keyword) => text.includes(keyword));
-
-  if (explicitlySingle && blueprints.length) {
-    return [createComponent(blueprints[0])];
-  }
-
-  if (!blueprints.length) {
-    blueprints.push(
-      { name: "Summary KPI", type: "metric-card", prompt: "A summary card that becomes a detailed panel." },
-      { name: "Trend chart", type: "chart-panel", prompt: "A chart that can drill into deeper detail." },
-      { name: "Period filters", type: "filter-group", prompt: "Change the visible dataset between date ranges." }
-    );
-  }
-
-  return blueprints.map((item) => createComponent(item));
-}
-
-function buildScreenAnalysis(screen) {
+function inferCategories(screen) {
   const text = `${screen.name} ${screen.prompt} ${screen.figmaUrl}`.toLowerCase();
-  const notes = [];
-  const patterns = new Set(screen.components.map((component) => screenPrimarySuggestion(component).title));
-  const states = new Set(screen.components.map((component) => component.interaction));
-  const componentScope = screen.components.length <= 1 ? "single component" : "multiple components";
-  const figmaMeta = parseFigmaUrl(screen.figmaUrl);
+  const suggestions = new Set();
 
-  if (screen.sourceImageData) {
-    notes.push("A source image is loaded, so the stage can show the screen visually while you place motion on its components.");
+  if (text.match(/button|cta|action|primary/)) suggestions.add("button");
+  if (text.match(/page|transition|detail|back|route|screen/)) suggestions.add("page-transition");
+  if (text.match(/menu|drawer|nav|navigation/)) suggestions.add("show-hide-menu");
+  if (text.match(/scroll|viewport|reveal|appear/)) suggestions.add("scroll-appear");
+  if (text.match(/carousel|rail|slider|swipe|trending/)) suggestions.add("carousel");
+
+  if (!suggestions.size) {
+    suggestions.add("button");
+    suggestions.add("page-transition");
   }
 
-  if (screen.sourceImageData && figmaMeta) {
-    notes.push("Both sources are active: the uploaded image is used as visual reference, and the Figma link is used as structured source metadata.");
-  } else if (figmaMeta) {
-    notes.push("A Figma link is linked as structured source metadata, but the studio cannot render the Figma frame visually here without an uploaded image.");
-  } else if (screen.figmaUrl) {
-    notes.push("A link is attached, but it could not be parsed as a Figma frame URL.");
-  } else if (!screen.sourceImageData) {
-    notes.push("No visual source image is loaded yet.");
-  }
-
-  if (text.includes("hover") || text.includes("mouse over")) {
-    notes.push("The screen description mentions hover behavior, so micro-interactions should be reviewed on interactive surfaces.");
-  }
-
-  if (text.includes("loading") || text.includes("skeleton")) {
-    notes.push("The screen description mentions loading, so fade through or subtle placeholder transitions should be prioritized.");
-  }
-
-  if (text.includes("scroll")) {
-    notes.push("The screen description mentions scroll, so persistent shells should stay stable while list or chart content moves.");
-  }
-
-  if (!notes.length) {
-    notes.push("The current component suggestions are based on the screen name and prompt, then mapped to Google Material Motion 3 patterns.");
-  }
-
-  if (screen.components.length) {
-    notes.push(`Primary motion families on this screen: ${Array.from(patterns).join(", ")}.`);
-    notes.push(`This analysis identifies ${componentScope} on the current screen.`);
-    if (figmaMeta?.fileKey) {
-      notes.push(`Figma file key detected: ${figmaMeta.fileKey}${figmaMeta.nodeId ? ` · node ${figmaMeta.nodeId}` : ""}.`);
-    }
-  }
-
-  return {
-    summary: screen.components.length <= 1
-      ? "This source currently reads as a single component. The analysis below recommends the most suitable Material Motion 3 behavior for that component."
-      : `${screen.components.length} components suggested from the current source and prompt. Start with the first focal surface, then choreograph supporting components with shorter staggered motion.`,
-    overview: buildScreenOverview({
-      screen,
-      patterns: Array.from(patterns),
-      states: Array.from(states),
-      componentScope
-    }),
-    notes
-  };
+  return Array.from(suggestions);
 }
 
-function buildScreenOverview({ screen, patterns, states, componentScope }) {
-  const text = `${screen.name} ${screen.prompt}`.toLowerCase();
-  const componentNames = screen.components.map((component) => component.name).join(", ");
-  const staggerStart = screen.components.length > 2 ? "40-80ms" : "20-40ms";
-
-  let summary = componentScope === "single component"
-    ? `The source currently reads as one primary component: ${componentNames}.`
-    : `The screen currently reads as a mobile-first dark interface with ${componentNames}.`;
-
-  if (text.includes("home") || text.includes("hero")) {
-    summary += " The leading surface should arrive first and establish hierarchy before supporting content follows.";
-  } else if (text.includes("dashboard") || text.includes("analytics")) {
-    summary += " Dense information should feel sequenced, with one focal transition and stable surrounding chrome.";
-  } else {
-    summary += " The strongest result comes from giving one component the main arrival while supporting elements settle in after it.";
-  }
-
-  const motionSentence = `Recommended Material Motion 3 families here are ${patterns.join(", ") || "Container transform"} with ${states.includes("hover") ? "micro-interactions on interactive elements" : "supporting state motion on interactive elements"}.`;
-  const sequencingSentence = `Use ${staggerStart} stagger between major component groups so the screen feels choreographed rather than simultaneous.`;
-
-  return `${summary} ${motionSentence} ${sequencingSentence}`;
-}
-
-function inferComponentStates(component) {
-  const states = new Set(["enter"]);
-  const prompt = `${component.prompt} ${component.name}`.toLowerCase();
-
-  if (prompt.includes("loading") || component.interaction === "loading") states.add("loading");
-  if (prompt.includes("hover") || prompt.includes("mouse over") || component.interaction === "hover") states.add("hover");
-  if (component.type === "filter-group" || component.type === "tab-panel") states.add("selection");
-  if (component.type === "metric-card" || component.type === "list-row" || component.type === "chart-panel") states.add("drill-in");
-
-  return Array.from(states);
-}
-
-function componentDisplayName(component) {
-  const typeLabels = {
-    "metric-card": "Hero or KPI card",
-    "chart-panel": "Chart or media panel",
-    "tab-panel": "Tab or carousel rail",
-    "filter-group": "Filter or segmented control",
-    "list-row": "List item",
-    "dialog-sheet": "Overlay or sheet"
-  };
-
-  return typeLabels[component.type] || "Component";
-}
-
-function buildComponentMotionBrief(component, index) {
-  const primary = screenPrimarySuggestion(component);
-  const preset = presets[primary.preset];
-  const easing = easingProfiles[preset.easing] || easingProfiles["cubic-bezier(0.2, 0, 0, 1)"];
-  const states = inferComponentStates(component);
-  const emphasis = easing.label === "Emphasized"
-    ? "This component deserves stronger focus and should land with more presence."
-    : "This component should move as supporting UI, with clear but restrained motion.";
-
-  return {
-    role: componentDisplayName(component),
-    pattern: primary.title,
-    patternReason: primary.reason,
-    easingName: easing.label,
-    easingValue: easing.value,
-    easingUse: easing.use,
-    duration: `${preset.duration}ms`,
-    stagger: `${index * 40}ms`,
-    states,
-    emphasis
-  };
-}
-
-function screenPrimarySuggestion(component) {
-  return buildMotionAnalysis(component)[0];
-}
-
-function renderHierarchy() {
-  els.sidebar.classList.toggle("collapsed", state.sidebarCollapsed);
-  els.hierarchyList.innerHTML = state.screens
-    .map((screen) => {
-      const screenActive = state.selected.kind === "screen" && state.selected.screenId === screen.id;
-      const childMarkup = screen.components
-        .map((component) => {
-          const active = state.selected.kind === "component" && state.selected.componentId === component.id;
-          return `
-            <div class="hierarchy-row">
-              <button class="hierarchy-item child${active ? " active" : ""}" data-kind="component" data-screen-id="${screen.id}" data-component-id="${component.id}">
-                <span class="hierarchy-title">${escapeHtml(component.name)}</span>
-                <span class="hierarchy-meta">${escapeHtml(component.type)} · ${escapeHtml(statusLabel(component.status))}</span>
-              </button>
-              <button class="hierarchy-remove" data-remove-component="${component.id}" data-screen-id="${screen.id}" aria-label="Remove ${escapeHtml(component.name)}">×</button>
-            </div>
-          `;
-        })
-        .join("");
-
-      return `
-        <div class="hierarchy-group">
-          <button class="hierarchy-item screen${screenActive ? " active" : ""}" data-kind="screen" data-screen-id="${screen.id}">
-            <span class="hierarchy-title">${escapeHtml(screen.name)}</span>
-            <span class="hierarchy-meta">${screen.components.length} components · ${escapeHtml(screenWorkflowStatus(screen))}</span>
-          </button>
-          <div class="hierarchy-children">${childMarkup}</div>
-        </div>
-      `;
-    })
-    .join("");
-
-  els.hierarchyList.querySelectorAll("[data-kind='screen']").forEach((button) => {
-    button.addEventListener("click", () => selectScreen(button.dataset.screenId));
-  });
-
-  els.hierarchyList.querySelectorAll("[data-kind='component']").forEach((button) => {
-    button.addEventListener("click", () => selectComponent(button.dataset.screenId, button.dataset.componentId));
-  });
-
-  els.hierarchyList.querySelectorAll("[data-remove-component]").forEach((button) => {
-    button.addEventListener("click", (event) => {
-      event.stopPropagation();
-      removeComponent(button.dataset.screenId, button.dataset.removeComponent);
-    });
-  });
-}
-
-function renderBreakpoint() {
-  els.deviceStage.className = `device-stage ${state.breakpoint}`;
-  els.deviceLabel.textContent = `${capitalize(state.breakpoint)} preview`;
-  els.breakpointSwitcher.querySelectorAll("button").forEach((button) => {
-    button.classList.toggle("active", button.dataset.breakpoint === state.breakpoint);
-  });
-}
-
-function componentMarkup(component, includePlay = false) {
-  const preset = presets[component.preset];
-  const interactionClass = component.interaction === "hover" ? " is-hover" : component.interaction === "loading" ? " is-loading" : "";
-  const playButton = includePlay
-    ? `<button class="preview-play" data-play-component="${component.id}">Play</button>`
-    : "";
-
-  const variants = {
-    "metric-card": `
-      <article class="preview-surface preview-block${interactionClass}" data-preview-component="${component.id}" data-focus-component="${component.id}">
-        <div class="preview-topbar">
-          <div class="preview-title">${escapeHtml(component.name)}</div>
-          <div class="preview-chip">${preset.label}</div>
-        </div>
-        ${playButton}
-        <div class="preview-metric-value">${component.interaction === "loading" ? "--.--" : "12.4%"}</div>
-        <div class="preview-subtle">${component.interaction === "loading" ? "Loading metric" : "+2.1 this week"}</div>
-        <div class="preview-chart"></div>
-      </article>
-    `,
-    "chart-panel": `
-      <article class="preview-surface preview-block${interactionClass}" data-preview-component="${component.id}" data-focus-component="${component.id}">
-        <div class="preview-topbar">
-          <div class="preview-title">${escapeHtml(component.name)}</div>
-          <div class="preview-chip">${preset.label}</div>
-        </div>
-        ${playButton}
-        <div class="preview-chart"></div>
-        <div class="preview-bars">
-          <div class="preview-bar" style="width: 78%"></div>
-          <div class="preview-bar" style="width: 92%"></div>
-          <div class="preview-bar" style="width: 58%"></div>
-        </div>
-      </article>
-    `,
-    "tab-panel": `
-      <article class="preview-surface preview-block${interactionClass}" data-preview-component="${component.id}" data-focus-component="${component.id}">
-        <div class="preview-topbar">
-          <div class="preview-title">${escapeHtml(component.name)}</div>
-          <div class="preview-chip">${preset.label}</div>
-        </div>
-        ${playButton}
-        <div class="preview-tabs">
-          <div class="preview-tab active">Overview</div>
-          <div class="preview-tab">Breakdown</div>
-          <div class="preview-tab">Compare</div>
-        </div>
-        <div class="preview-bars">
-          <div class="preview-bar" style="width: 86%"></div>
-          <div class="preview-bar" style="width: 72%"></div>
-          <div class="preview-bar" style="width: 64%"></div>
-        </div>
-      </article>
-    `,
-    "filter-group": `
-      <article class="preview-surface preview-block${interactionClass}" data-preview-component="${component.id}" data-focus-component="${component.id}">
-        <div class="preview-topbar">
-          <div class="preview-title">${escapeHtml(component.name)}</div>
-          <div class="preview-chip">${preset.label}</div>
-        </div>
-        ${playButton}
-        <div class="preview-filters">
-          <div class="preview-filter active">Last 7 days</div>
-          <div class="preview-filter">Last 30 days</div>
-          <div class="preview-filter">Region</div>
-        </div>
-        <div class="preview-bars">
-          <div class="preview-bar" style="width: 88%"></div>
-          <div class="preview-bar" style="width: 61%"></div>
-          <div class="preview-bar" style="width: 74%"></div>
-        </div>
-      </article>
-    `,
-    "list-row": `
-      <article class="preview-surface preview-block${interactionClass}" data-preview-component="${component.id}" data-focus-component="${component.id}">
-        <div class="preview-topbar">
-          <div class="preview-title">${escapeHtml(component.name)}</div>
-          <div class="preview-chip">${preset.label}</div>
-        </div>
-        ${playButton}
-        <div class="preview-table">
-          <div class="preview-row"></div>
-          <div class="preview-row"></div>
-          <div class="preview-row"></div>
-        </div>
-      </article>
-    `,
-    "dialog-sheet": `
-      <article class="preview-surface preview-block${interactionClass}" data-preview-component="${component.id}" data-focus-component="${component.id}">
-        <div class="preview-topbar">
-          <div class="preview-title">${escapeHtml(component.name)}</div>
-          <div class="preview-chip">${preset.label}</div>
-        </div>
-        ${playButton}
-        <div class="preview-sheet">
-          <div class="preview-metric-value" style="font-size: 28px">Action sheet</div>
-          <div class="preview-subtle">Focused overlay surface.</div>
-          <div class="preview-bars">
-            <div class="preview-bar" style="width: 90%"></div>
-            <div class="preview-bar" style="width: 76%"></div>
-          </div>
-        </div>
-      </article>
-    `
-  };
-
-  return variants[component.type] || variants["metric-card"];
-}
-
-function renderOverlayButton(component, selected = false) {
-  const frame = component.frame || { x: 8, y: 8, w: 84, h: 16 };
-  const primary = screenPrimarySuggestion(component);
-  return `
-    <button
-      class="source-overlay${selected ? " selected" : ""}"
-      data-overlay-focus="${component.id}"
-      style="left:${frame.x}%;top:${frame.y}%;width:${frame.w}%;height:${frame.h}%"
-    >
-      <span class="source-overlay-name">${escapeHtml(component.name)}</span>
-      <span class="source-overlay-motion">${escapeHtml(primary.title)}</span>
-    </button>
-  `;
-}
-
-function renderStage() {
-  const screen = currentScreen();
-  const component = currentComponent();
-  const analyzeMode = state.mode === "analyze";
-
-  if (state.selected.kind === "component" && component) {
-    const sourceReference = screen.sourceImageData
-      ? `
-        <div class="focus-reference">
-          <div class="focus-reference-head">
-            <div class="eyebrow">Source Reference</div>
-            <div class="focus-reference-copy">Original screen with the selected component highlighted.</div>
-          </div>
-          <div class="screen-source-stage focus-source-stage">
-            <img class="screen-source-image" src="${screen.sourceImageData}" alt="${escapeHtml(screen.name)}">
-            ${renderOverlayButton(component, true)}
-          </div>
-        </div>
-      `
-      : "";
-
-    els.stageContent.innerHTML = `
-      <div class="focus-preview">
-        ${sourceReference}
-        ${componentMarkup(component, true)}
-      </div>
-    `;
-  } else if (!screen.figmaUrl && !screen.sourceImageData) {
-    els.stageContent.innerHTML = `
-      <div class="empty-stage">
-        <div class="empty-title">Start with a source</div>
-        <div class="empty-copy">Add a Figma link or upload an image in the right panel. Then generate the screen to create HTML components and Material Motion 3 analysis.</div>
-      </div>
-    `;
-  } else if (!screen.generated) {
-    const sourceBlock = screen.sourceImageData
-      ? `
-        <div class="screen-source-stage">
-          <img class="screen-source-image" src="${screen.sourceImageData}" alt="${escapeHtml(screen.name)}">
-        </div>
-      `
-      : `
-        <div class="source-summary">
-          <div class="source-summary-title">Figma source linked</div>
-          <div class="source-summary-copy">${escapeHtml(screen.figmaUrl)}</div>
-          <div class="source-summary-copy">This gives the studio a source reference. Uploading an image is still the best way to see the exact screen visually inside the app.</div>
-        </div>
-      `;
-    els.stageContent.innerHTML = `
-      <div class="empty-stage">
-        <div class="empty-title">Ready to analyze</div>
-        <div class="empty-copy">The screen source is loaded. Click Analyze screen to create a component hierarchy, HTML prototypes, and Material Motion 3 suggestions.</div>
-        ${sourceBlock}
-      </div>
-    `;
-  } else {
-    const figmaMeta = parseFigmaUrl(screen.figmaUrl);
-    const imageBlock = screen.sourceImageData
-      ? `
-        <div class="screen-source-stage">
-          <img class="screen-source-image" src="${screen.sourceImageData}" alt="${escapeHtml(screen.name)}">
-          ${screen.components.map((item) => renderOverlayButton(item)).join("")}
-        </div>
-      `
-      : `
-        <div class="source-summary">
-          <div class="source-summary-title">Link attached, but no visual source loaded</div>
-          <div class="source-summary-copy">The studio can keep the Figma link as reference, but it cannot visually recreate the actual screen from the link alone here.</div>
-          <div class="source-summary-copy">Upload a screenshot or image export from Figma if you want the real design to appear in the stage.</div>
-          ${figmaMeta?.fileKey ? `<div class="source-summary-copy">Detected file: ${escapeHtml(figmaMeta.fileKey)}${figmaMeta.nodeId ? ` · node ${escapeHtml(figmaMeta.nodeId)}` : ""}</div>` : ""}
-        </div>
-      `;
-    const generatedPreviewMarkup = analyzeMode
-      ? `
-        <div class="generated-previews-summary">
-          <div class="generated-previews-title">Detected components</div>
-          <div class="generated-previews-copy">The stage keeps your uploaded design as the primary reference. Open a component to preview and tweak its motion behavior.</div>
-        </div>
-      `
-      : `
-        <div class="generated-preview-stack">
-          ${screen.components.map((item) => componentMarkup(item, true)).join("")}
-        </div>
-      `;
-    els.stageContent.innerHTML = `
-      <div class="screen-preview source-first">
-        ${imageBlock}
-        ${generatedPreviewMarkup}
-      </div>
-    `;
-  }
-
-  els.stageContent.querySelectorAll("[data-play-component]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const target = els.stageContent.querySelector(`[data-preview-component="${button.dataset.playComponent}"]`);
-      replayPreview(target);
-    });
-  });
-
-  if (state.selected.kind === "screen") {
-    els.stageContent.querySelectorAll("[data-focus-component]").forEach((node) => {
-      node.addEventListener("click", (event) => {
-        if (event.target.closest("[data-play-component]")) return;
-        selectComponent(screen.id, node.dataset.focusComponent);
-      });
-    });
-  }
-
-  els.stageContent.querySelectorAll("[data-overlay-focus]").forEach((button) => {
-    button.addEventListener("click", () => {
-      selectComponent(screen.id, button.dataset.overlayFocus);
-    });
-  });
-}
-
-function replayPreview(node) {
-  if (!node) return;
-  node.classList.remove("replay");
-  void node.offsetWidth;
-  node.classList.add("replay");
-}
-
-function renderAnalysis() {
-  const component = currentComponent();
-  if (!component) {
-    els.analysisList.innerHTML = "";
-    return;
-  }
-
-  component.analysis = buildMotionAnalysis({
-    ...component,
-    type: els.componentType.value,
-    prompt: els.componentPrompt.value.trim()
-  });
-
-  els.analysisList.innerHTML = component.analysis
-    .map((item, index) => `
-      <button class="analysis-item${item.preset === els.preset.value ? " active" : ""}" data-preset="${item.preset}">
-        <div class="analysis-top">
-          <span class="analysis-title">${escapeHtml(item.title)}</span>
-          <span class="analysis-badge">${index === 0 ? "Recommended" : "Option"}</span>
-        </div>
-        <div class="analysis-reason">${escapeHtml(item.reason)}</div>
-      </button>
-    `)
-    .join("");
-
-  els.analysisList.querySelectorAll("[data-preset]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const presetKey = button.dataset.preset;
-      const component = currentComponent();
-      component.preset = presetKey;
-      component.motion = snapshotPreset(presetKey);
-      persistState();
-      syncUI();
-    });
-  });
-}
-
-function renderScreenAnalysis() {
-  const screen = currentScreen();
-
-  if (!screen.generated || !screen.components.length) {
-    els.screenAnalysisCopy.textContent = "Analyze the screen to create a component hierarchy and suggest Material Motion 3 patterns.";
-    els.screenAnalysisList.innerHTML = "";
-    return;
-  }
-
-  els.screenAnalysisCopy.textContent = screen.analysisSummary || `The screen has ${screen.components.length} suggested components. Start with the most important interaction and then fine-tune each component.`;
-  const overviewMarkup = screen.analysisOverview
-    ? `<div class="screen-analysis-overview">${escapeHtml(screen.analysisOverview)}</div>`
-    : "";
-  const noteMarkup = (screen.analysisNotes || [])
-    .map((note) => `<div class="screen-analysis-note">${escapeHtml(note)}</div>`)
-    .join("");
-
-  const componentMarkup = screen.components
-    .map((component, index) => {
-      const suggestion = screenPrimarySuggestion(component);
-      const brief = buildComponentMotionBrief(component, index);
-      return `
-        <button class="analysis-item analysis-rich" data-screen-component="${component.id}">
-          <div class="analysis-top">
-            <span class="analysis-title">${escapeHtml(component.name)}</span>
-            <span class="analysis-badge">${escapeHtml(suggestion.title)}</span>
-          </div>
-          <div class="analysis-role">${escapeHtml(brief.role)}</div>
-          <div class="analysis-copy">Identified as an individual component with its own motion recommendation.</div>
-          <div class="analysis-reason">${escapeHtml(suggestion.reason)}</div>
-          <div class="analysis-meta">
-            <span class="analysis-pill">${escapeHtml(brief.easingName)}</span>
-            <span class="analysis-pill">${escapeHtml(brief.duration)}</span>
-            <span class="analysis-pill">Stagger ${escapeHtml(brief.stagger)}</span>
-          </div>
-          <div class="analysis-easing">${escapeHtml(brief.easingValue)}</div>
-          <div class="analysis-copy">${escapeHtml(brief.emphasis)}</div>
-          <div class="analysis-state-row">
-            ${brief.states.map((state) => `<span class="analysis-state">${escapeHtml(state)}</span>`).join("")}
-          </div>
-        </button>
-      `;
-    })
-    .join("");
-
-  els.screenAnalysisList.innerHTML = `${overviewMarkup}${noteMarkup}${componentMarkup}`;
-
-  els.screenAnalysisList.querySelectorAll("[data-screen-component]").forEach((button) => {
-    button.addEventListener("click", () => {
-      selectComponent(screen.id, button.dataset.screenComponent);
-    });
-  });
-}
-
-function buildHandoffSpec(component, screen) {
-  const suggestion = screenPrimarySuggestion(component);
-  const motion = component.motion;
-  return {
-    screen: screen.name,
-    component_name: component.name,
-    component_type: component.type,
-    component_role: componentDisplayName(component),
-    status: component.status,
-    platform: component.platform,
-    trigger: component.interaction,
-    material_pattern: suggestion.title,
-    material_preset: component.preset,
-    easing_curve: motion.easing,
-    easing_name: (easingProfiles[motion.easing] || { label: "Custom" }).label,
-    duration_ms: motion.duration,
-    delay_ms: motion.stagger,
-    move_px: motion.distance,
-    scale_start: motion.scale,
-    opacity_start: motion.opacity,
-    states: inferComponentStates(component),
-    reduced_motion_fallback: component.reducedMotion,
-    engineering_notes: component.engineeringNotes || "No additional implementation notes yet."
-  };
-}
-
-function renderHandoff() {
-  const screen = currentScreen();
-  const component = currentComponent();
-
-  if (!component) {
-    const approved = screen.components.filter((item) => item.status === "approved").length;
-    els.handoffReadable.innerHTML = `
-      <div class="handoff-empty">
-        <div class="analysis-copy">Select a component to prepare developer handoff.</div>
-        <div class="analysis-copy">${approved} of ${screen.components.length} components approved for handoff.</div>
-      </div>
-    `;
-    els.handoffJson.textContent = "";
-    return;
-  }
-
-  const spec = buildHandoffSpec(component, screen);
-  els.componentStatus.value = component.status;
-  els.componentPlatform.value = component.platform;
-  els.reducedMotion.value = component.reducedMotion;
-  els.engineeringNotes.value = component.engineeringNotes;
-
-  els.handoffReadable.innerHTML = `
-    <div class="handoff-line"><strong>Component:</strong> ${escapeHtml(spec.component_name)}</div>
-    <div class="handoff-line"><strong>Pattern:</strong> ${escapeHtml(spec.material_pattern)}</div>
-    <div class="handoff-line"><strong>Trigger:</strong> ${escapeHtml(spec.trigger)}</div>
-    <div class="handoff-line"><strong>Easing:</strong> ${escapeHtml(spec.easing_name)} ${escapeHtml(spec.easing_curve)}</div>
-    <div class="handoff-line"><strong>Duration:</strong> ${spec.duration_ms}ms</div>
-    <div class="handoff-line"><strong>Delay/Stagger:</strong> ${spec.delay_ms}ms</div>
-    <div class="handoff-line"><strong>States:</strong> ${escapeHtml(spec.states.join(", "))}</div>
-    <div class="handoff-line"><strong>Reduced motion:</strong> ${escapeHtml(spec.reduced_motion_fallback)}</div>
-  `;
-  els.handoffJson.textContent = JSON.stringify(spec, null, 2);
-}
-
-function applyMotionValues() {
-  document.documentElement.style.setProperty("--duration", `${els.duration.value}ms`);
-  document.documentElement.style.setProperty("--easing", els.easing.value);
-  document.documentElement.style.setProperty("--scale-start", els.scale.value);
-  document.documentElement.style.setProperty("--opacity-start", els.opacity.value);
-
-  els.durationValue.textContent = `${els.duration.value} ms`;
-  els.distanceValue.textContent = `${els.distance.value} px`;
-  els.scaleValue.textContent = Number(els.scale.value).toFixed(2);
-  els.opacityValue.textContent = Number(els.opacity.value).toFixed(2);
-  els.staggerValue.textContent = `${els.stagger.value} ms`;
-
-  const preset = presets[els.preset.value];
-  els.guidanceList.innerHTML = preset.guidance.map((item) => `<li>${item}</li>`).join("");
-}
-
-function syncInspector() {
-  const screen = currentScreen();
-  const component = currentComponent();
-  const screenSelected = state.selected.kind === "screen";
-  const analyzeMode = state.mode === "analyze";
-  const tweakMode = state.mode === "tweak";
-  const handoffMode = state.mode === "handoff";
-
-  els.modeTabs.querySelectorAll("[data-mode]").forEach((button) => {
-    button.classList.toggle("active", button.dataset.mode === state.mode);
-  });
-
-  els.screenSection.classList.toggle("hidden", !(analyzeMode && screenSelected));
-  els.screenAnalysisSection.classList.toggle("hidden", !(analyzeMode && screenSelected));
-  els.screenName.value = screen.name;
-  els.screenFigmaUrl.value = screen.figmaUrl || "";
-  els.screenPrompt.value = screen.prompt || "";
-
-  els.componentSection.classList.toggle("hidden", !component || handoffMode);
-  els.analysisSection.classList.toggle("hidden", !(component && (analyzeMode || tweakMode)));
-  els.motionSection.classList.toggle("hidden", !(component && tweakMode));
-  els.rationaleSection.classList.toggle("hidden", !(component && tweakMode));
-  els.handoffSection.classList.toggle("hidden", !handoffMode);
-  els.saveComponent.classList.toggle("hidden", !(component && tweakMode));
-  els.duplicateComponent.classList.toggle("hidden", !(component && tweakMode));
-  els.deleteComponent.classList.toggle("hidden", !(component && tweakMode));
-
-  if (component) {
-    els.componentName.value = component.name;
-    els.componentType.value = component.type;
-    els.componentPrompt.value = component.prompt || "";
-    els.componentInteraction.value = component.interaction || "enter";
-    els.preset.value = component.preset;
-    els.duration.value = component.motion.duration;
-    els.easing.value = component.motion.easing;
-    els.distance.value = component.motion.distance;
-    els.scale.value = component.motion.scale;
-    els.opacity.value = component.motion.opacity;
-    els.stagger.value = component.motion.stagger;
-    if (analyzeMode || tweakMode) renderAnalysis();
-  } else {
-    els.analysisList.innerHTML = "";
-    els.guidanceList.innerHTML = "";
-  }
-
-  if (screenSelected && analyzeMode) {
-    renderScreenAnalysis();
-  }
-
-  if (handoffMode) {
-    renderHandoff();
-  }
-}
-
-function syncUI() {
-  renderHierarchy();
-  renderBreakpoint();
-  renderStageHeader();
-  syncInspector();
-  applyMotionValues();
-  renderStage();
-}
-
-function renderStageHeader() {
-  const screen = currentScreen();
-  const component = currentComponent();
-  if (state.selected.kind === "component" && component) {
-    els.selectionKind.textContent = "Component focus";
-    els.stageTitle.textContent = component.name;
-    els.stageSubtitle.textContent = `Focused inside ${screen.name}. Review the source reference, then adjust the component's Material Motion 3 behavior.`;
-    els.stageStatus.textContent = `Editing ${component.interaction} motion`;
-  } else {
-    els.selectionKind.textContent = "Screen";
-    els.stageTitle.textContent = screen.name;
-    if (!screen.figmaUrl && !screen.sourceImageData) {
-      els.stageSubtitle.textContent = "Add a Figma link or upload an image, then generate components and motion analysis.";
-      els.stageStatus.textContent = "Waiting for source";
-    } else if (!screen.generated) {
-      els.stageSubtitle.textContent = "Your source is loaded. Analyze the screen to build a component hierarchy and Google Material Motion 3 suggestions.";
-      els.stageStatus.textContent = "Ready to analyze";
-    } else {
-      els.stageSubtitle.textContent = `${screen.components.length} components are ready. Choose one hotspot or analysis card to start tweaking motion.`;
-      els.stageStatus.textContent = "Analysis ready";
-    }
-  }
-}
-
-function generateScreen() {
+function analyzeScreen() {
   const screen = currentScreen();
   screen.name = els.screenName.value.trim() || "Untitled screen";
   screen.figmaUrl = els.screenFigmaUrl.value.trim();
@@ -1303,228 +287,592 @@ function generateScreen() {
     return;
   }
 
-  screen.components = inferComponentFrames(inferComponentsForScreen(screen));
-  const screenAnalysis = buildScreenAnalysis(screen);
-  screen.analysisSummary = screenAnalysis.summary;
-  screen.analysisOverview = screenAnalysis.overview;
-  screen.analysisNotes = screenAnalysis.notes;
-  screen.generated = true;
-  state.selected = {
-    kind: "screen",
-    screenId: screen.id,
-    componentId: null
-  };
+  const categoryKeys = inferCategories(screen);
+  screen.components = categoryKeys.map((categoryKey) => createComponent(categoryKey));
+  screen.handoffReady = false;
+  state.selectedComponentId = screen.components[0]?.id || null;
+  state.mode = "analyze";
   persistState();
   syncUI();
+}
+
+function addComponentManually() {
+  const screen = currentScreen();
+  const component = createComponent("button", { name: `New ${categoryCatalog.button.label}` });
+  component.sourceLabel = "Added manually";
+  screen.components.push(component);
+  state.selectedComponentId = component.id;
+  state.mode = "confirm";
+  screen.handoffReady = false;
+  persistState();
+  syncUI();
+}
+
+function removeComponent() {
+  const screen = currentScreen();
+  const component = currentComponent();
+  if (!component) return;
+  screen.components = screen.components.filter((item) => item.id !== component.id);
+  state.selectedComponentId = screen.components[0]?.id || null;
+  refreshHandoffReady(screen);
+  persistState();
+  syncUI();
+}
+
+function removeScreen() {
+  state.screens = state.screens.filter((screen) => screen.id !== state.selectedScreenId);
+  ensureAtLeastOneScreen();
+  if (!state.screens.some((screen) => screen.id === state.selectedScreenId)) {
+    state.selectedScreenId = state.screens[0].id;
+    state.selectedComponentId = null;
+  }
+  persistState();
+  syncUI();
+}
+
+function resetAnalysis() {
+  const screen = currentScreen();
+  screen.components = [];
+  screen.handoffReady = false;
+  state.selectedComponentId = null;
+  persistState();
+  syncUI();
+}
+
+function refreshHandoffReady(screen) {
+  screen.handoffReady = screen.components.length > 0 && screen.components.every((component) => component.verificationStatus === "confirmed");
+}
+
+function updateCurrentComponentFromInputs() {
+  const component = currentComponent();
+  const screen = currentScreen();
+  if (!component) return;
+  component.name = els.componentName.value.trim() || categoryCatalog[component.category].label;
+  component.category = els.componentCategory.value;
+  component.verificationStatus = els.componentVerification.value;
+  component.intent = els.componentIntent.value.trim();
+  component.pattern = els.componentPattern.value;
+  component.easing = els.componentEasing.value;
+  component.duration = Number(els.componentDuration.value) || categoryCatalog[component.category].duration;
+  component.delay = Number(els.componentDelay.value) || 0;
+  component.trigger = els.componentTrigger.value.trim();
+  component.states = els.componentStates.value.split(",").map((item) => item.trim()).filter(Boolean);
+  component.reducedMotion = els.reducedMotion.value.trim();
+  component.engineeringNotes = els.engineeringNotes.value.trim();
+  component.prototype = categoryCatalog[component.category].prototype;
+  refreshHandoffReady(screen);
+}
+
+function applyCategoryTemplate(categoryKey) {
+  const component = currentComponent();
+  if (!component) return;
+  const template = categoryCatalog[categoryKey];
+  component.category = categoryKey;
+  component.intent = template.intent;
+  component.pattern = template.pattern;
+  component.easing = template.easing;
+  component.duration = template.duration;
+  component.delay = template.delay;
+  component.trigger = template.trigger;
+  component.states = [...template.states];
+  component.reducedMotion = template.reducedMotion;
+  component.engineeringNotes = template.engineeringNotes;
+  component.prototype = template.prototype;
+  if (!component.name || component.name === categoryCatalog[component.category]?.label) {
+    component.name = template.label;
+  }
 }
 
 function saveComponent() {
-  const component = currentComponent();
-  if (!component) return;
-  syncComponentDraftFromInputs();
-  if (component.status === "unreviewed") {
-    component.status = "reviewed";
-  }
-  persistState();
-  syncUI();
-}
-
-function syncComponentDraftFromInputs() {
-  const component = currentComponent();
-  if (!component) return;
-
-  component.name = els.componentName.value.trim() || "Untitled component";
-  component.type = els.componentType.value;
-  component.prompt = els.componentPrompt.value.trim();
-  component.interaction = els.componentInteraction.value;
-  component.preset = els.preset.value;
-  component.analysis = buildMotionAnalysis(component);
-  component.motion = {
-    duration: Number(els.duration.value),
-    easing: els.easing.value,
-    distance: Number(els.distance.value),
-    scale: Number(els.scale.value),
-    opacity: Number(els.opacity.value),
-    stagger: Number(els.stagger.value)
-  };
-  component.platform = els.componentPlatform?.value || component.platform;
-  component.reducedMotion = els.reducedMotion?.value || component.reducedMotion;
-  component.engineeringNotes = els.engineeringNotes?.value || component.engineeringNotes;
-}
-
-function recommendMotion() {
-  const component = currentComponent();
-  if (!component) return;
-  component.type = els.componentType.value;
-  component.prompt = els.componentPrompt.value.trim();
-  component.analysis = buildMotionAnalysis(component);
-  component.preset = component.analysis[0].preset;
-  component.motion = snapshotPreset(component.preset);
-  persistState();
-  syncUI();
-}
-
-function addEmptyScreen() {
-  const screen = createScreen({ name: `New screen ${state.screens.length + 1}` });
-  state.screens.push(screen);
-  state.selected = {
-    kind: "screen",
-    screenId: screen.id,
-    componentId: null
-  };
-  persistState();
-  syncUI();
-}
-
-function addChildComponent() {
-  const screen = currentScreen();
-  const component = createComponent({
-    name: `Component ${screen.components.length + 1}`,
-    type: "metric-card",
-    prompt: "A component that becomes a richer detail view."
-  });
-  component.frame = inferComponentFrames([component])[0].frame;
-  screen.components.push(component);
-  const screenAnalysis = buildScreenAnalysis(screen);
-  screen.analysisSummary = screenAnalysis.summary;
-  screen.analysisOverview = screenAnalysis.overview;
-  screen.analysisNotes = screenAnalysis.notes;
-  screen.generated = true;
-  state.selected = { kind: "component", screenId: screen.id, componentId: component.id };
-  persistState();
-  syncUI();
-}
-
-function duplicateComponent() {
-  const screen = currentScreen();
-  const component = currentComponent();
-  if (!component) return;
-  const copy = createComponent({
-    name: `${component.name} copy`,
-    type: component.type,
-    prompt: component.prompt,
-    preset: component.preset,
-    interaction: component.interaction
-  });
-  copy.motion = { ...component.motion };
-  copy.analysis = buildMotionAnalysis(copy);
-  copy.frame = component.frame ? { ...component.frame } : inferComponentFrames([copy])[0].frame;
-  screen.components.push(copy);
-  const screenAnalysis = buildScreenAnalysis(screen);
-  screen.analysisSummary = screenAnalysis.summary;
-  screen.analysisOverview = screenAnalysis.overview;
-  screen.analysisNotes = screenAnalysis.notes;
-  state.selected = { kind: "component", screenId: screen.id, componentId: copy.id };
-  persistState();
-  syncUI();
-}
-
-function removeComponent(screenId, componentId) {
-  const screen = state.screens.find((item) => item.id === screenId);
-  if (!screen) return;
-
-  screen.components = screen.components.filter((component) => component.id !== componentId);
-  const screenAnalysis = buildScreenAnalysis(screen);
-  screen.analysisSummary = screenAnalysis.summary;
-  screen.analysisOverview = screenAnalysis.overview;
-  screen.analysisNotes = screenAnalysis.notes;
-  screen.generated = screen.components.length > 0;
-
-  if (state.selected.kind === "component" && state.selected.componentId === componentId) {
-    state.selected = {
-      kind: "screen",
-      screenId,
-      componentId: null
-    };
-  }
-
-  persistState();
-  syncUI();
-}
-
-function removeScreen(screenId) {
-  state.screens = state.screens.filter((screen) => screen.id !== screenId);
-  ensureAtLeastOneScreen();
-
-  if (!state.screens.some((screen) => screen.id === state.selected.screenId)) {
-    state.selected = {
-      kind: "screen",
-      screenId: state.screens[0].id,
-      componentId: null
-    };
-  }
-
-  persistState();
-  syncUI();
-}
-
-function focusScreen() {
-  selectScreen(currentScreen().id);
-}
-
-function resetScreenAnalysis(screen) {
-  screen.generated = false;
-  screen.components = [];
-  screen.analysisSummary = "";
-  screen.analysisOverview = "";
-  screen.analysisNotes = [];
-}
-
-function updateScreenDraft() {
-  const screen = currentScreen();
-  screen.name = els.screenName.value.trim() || screen.name || "Untitled screen";
-  screen.figmaUrl = els.screenFigmaUrl.value.trim();
-  screen.prompt = els.screenPrompt.value.trim();
-  resetScreenAnalysis(screen);
+  updateCurrentComponentFromInputs();
   persistState();
   syncUI();
 }
 
 function importJson() {
-  const raw = window.prompt("Paste screen JSON");
+  const raw = window.prompt("Paste exported JSON");
   if (!raw) return;
+
   try {
-    const data = JSON.parse(raw);
+    const parsed = JSON.parse(raw);
     const screen = createScreen({
-      name: data.name || "Imported screen",
-      figmaUrl: data.figmaUrl || "",
-      prompt: data.prompt || "",
-      sourceImageData: data.sourceImageData || "",
-      analysisSummary: data.analysisSummary || "",
-      analysisOverview: data.analysisOverview || "",
-      analysisNotes: data.analysisNotes || []
+      name: parsed.screen_name || "Imported screen",
+      figmaUrl: parsed.source?.figma_url || "",
+      sourceImageData: "",
+      prompt: ""
     });
-    screen.components = (data.components || []).map((item) =>
-      createComponent({
-        name: item.name,
-        type: item.type,
-        prompt: item.prompt || "",
-        preset: item.preset,
-        interaction: item.interaction || "enter",
-        frame: item.frame || null
+
+    screen.components = (parsed.components || []).map((component) =>
+      createComponent(component.category, {
+        name: component.component_name,
+        verificationStatus: component.verification_status,
+        intent: component.motion_intent,
+        pattern: component.material_pattern,
+        easing: component.easing_curve,
+        duration: component.duration_ms,
+        delay: component.delay_ms,
+        trigger: component.trigger,
+        states: component.states,
+        reducedMotion: component.reduced_motion,
+        engineeringNotes: component.engineering_notes
       })
     );
-    screen.components = inferComponentFrames(screen.components);
-    screen.generated = screen.components.length > 0;
+
+    refreshHandoffReady(screen);
     state.screens.push(screen);
-    selectScreen(screen.id);
+    state.selectedScreenId = screen.id;
+    state.selectedComponentId = screen.components[0]?.id || null;
+    persistState();
+    syncUI();
   } catch {
-    window.alert("Could not parse screen JSON.");
+    window.alert("Could not parse JSON.");
   }
 }
 
-function handleScreenImageUpload(event) {
+function handleImageUpload(event) {
   const file = event.target.files?.[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    const screen = currentScreen();
-    screen.sourceImageData = String(reader.result);
-    resetScreenAnalysis(screen);
+    currentScreen().sourceImageData = String(reader.result);
+    currentScreen().handoffReady = false;
     persistState();
     syncUI();
   };
   reader.readAsDataURL(file);
+}
+
+function addScreen() {
+  const screen = createScreen({ name: `New screen ${state.screens.length + 1}` });
+  state.screens.push(screen);
+  state.selectedScreenId = screen.id;
+  state.selectedComponentId = null;
+  state.mode = "analyze";
+  persistState();
+  syncUI();
+}
+
+function stageSummary(screen) {
+  const imageState = screen.sourceImageData ? "Image loaded" : "No image loaded";
+  const figmaMeta = parseFigmaUrl(screen.figmaUrl);
+  const figmaState = figmaMeta ? `Figma linked (${figmaMeta.fileKey})` : screen.figmaUrl ? "Link attached" : "No Figma link";
+  return `${imageState}. ${figmaState}.`;
+}
+
+function renderScreens() {
+  els.sidebar.classList.toggle("collapsed", state.sidebarCollapsed);
+  els.screenList.innerHTML = state.screens
+    .map((screen) => {
+      const active = screen.id === state.selectedScreenId;
+      const status = screen.handoffReady ? "Ready for handoff" : screen.components.length ? "Needs confirmation" : "Unanalyzed";
+      const tree = active && screen.components.length
+        ? `
+          <div class="component-tree">
+            ${screen.components.map((component) => `
+              <button class="component-item${component.id === state.selectedComponentId ? " active" : ""}" data-component-tree-id="${component.id}">
+                <span class="component-copy">
+                  <span class="component-name">${escapeHtml(component.name)}</span>
+                  <span class="component-type">${escapeHtml(categoryCatalog[component.category].label)}</span>
+                </span>
+                <span class="component-status ${escapeHtml(component.verificationStatus)}">${escapeHtml(component.verificationStatus)}</span>
+              </button>
+            `).join("")}
+          </div>
+        `
+        : "";
+      return `
+        <div class="screen-item${active ? " active" : ""}">
+          <button class="screen-row" data-screen-id="${screen.id}">
+            <span>
+              <span class="screen-item-title">${escapeHtml(screen.name)}</span>
+              <span class="screen-item-meta">${escapeHtml(status)}</span>
+            </span>
+            <span class="screen-status ${screen.handoffReady ? "ready" : ""}">${escapeHtml(status)}</span>
+          </button>
+          ${tree}
+        </div>
+      `;
+    })
+    .join("");
+
+  els.screenList.querySelectorAll("[data-screen-id]").forEach((button) => {
+    button.addEventListener("click", () => selectScreen(button.dataset.screenId));
+  });
+
+  els.screenList.querySelectorAll("[data-component-tree-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.selectedComponentId = button.dataset.componentTreeId;
+      state.mode = "confirm";
+      persistState();
+      syncUI();
+    });
+  });
+}
+
+function renderCategoryGrid(screen) {
+  const active = new Set(screen.components.map((component) => component.category));
+  els.categoryGrid.innerHTML = helperCategories()
+    .map((category) => `
+      <button class="category-card${active.has(category.key) ? " active" : ""}" data-category="${category.key}">
+        <span class="category-title">${escapeHtml(category.label)}</span>
+        <span class="category-copy">${escapeHtml(category.intent)}</span>
+      </button>
+    `)
+    .join("");
+
+  els.categoryGrid.querySelectorAll("[data-category]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const existing = screen.components.find((component) => component.category === button.dataset.category);
+      if (existing) {
+        state.selectedComponentId = existing.id;
+        state.mode = "confirm";
+      } else {
+        const component = createComponent(button.dataset.category);
+        component.sourceLabel = "Added from common component library";
+        screen.components.push(component);
+        state.selectedComponentId = component.id;
+        screen.handoffReady = false;
+        state.mode = "confirm";
+      }
+      persistState();
+      syncUI();
+    });
+  });
+}
+
+function renderAnalysisList(screen) {
+  const summaryPrefix = screen.components.length
+    ? `${screen.components.length} semantic component suggestions generated.`
+    : "No components generated yet.";
+  els.analysisSummary.textContent = `${summaryPrefix} ${stageSummary(screen)}`;
+
+  els.analysisList.innerHTML = screen.components
+    .map((component) => `
+      <button class="analysis-card${component.id === state.selectedComponentId ? " active" : ""}" data-component-id="${component.id}">
+        <div class="analysis-card-top">
+          <span class="analysis-card-title">${escapeHtml(component.name)}</span>
+          <span class="analysis-card-status">${escapeHtml(component.verificationStatus)}</span>
+        </div>
+        <div class="analysis-card-copy">${escapeHtml(categoryCatalog[component.category].label)} · ${escapeHtml(component.intent)}</div>
+        <div class="analysis-card-copy">${escapeHtml(component.sourceLabel)}</div>
+      </button>
+    `)
+    .join("");
+
+  els.analysisList.querySelectorAll("[data-component-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectComponent(button.dataset.componentId);
+      setMode("confirm");
+    });
+  });
+}
+
+function renderConfirmForm(component) {
+  if (!component) {
+    els.confirmSection.classList.add("hidden");
+    return;
+  }
+  els.confirmSection.classList.remove("hidden");
+  els.componentCategory.innerHTML = helperCategories()
+    .map((category) => `<option value="${category.key}">${escapeHtml(category.label)}</option>`)
+    .join("");
+
+  els.componentName.value = component.name;
+  els.componentCategory.value = component.category;
+  els.componentVerification.value = component.verificationStatus;
+  els.componentIntent.value = component.intent;
+  els.componentPattern.value = component.pattern;
+  els.componentEasing.value = component.easing;
+  els.componentDuration.value = component.duration;
+  els.componentDelay.value = component.delay;
+  els.componentTrigger.value = component.trigger;
+  els.componentStates.value = component.states.join(", ");
+  els.reducedMotion.value = component.reducedMotion;
+  els.engineeringNotes.value = component.engineeringNotes;
+}
+
+function readableSpec(screen, component) {
+  return `
+    <div class="spec-line"><strong>Screen:</strong> ${escapeHtml(screen.name)}</div>
+    <div class="spec-line"><strong>Component:</strong> ${escapeHtml(component.name)}</div>
+    <div class="spec-line"><strong>Category:</strong> ${escapeHtml(categoryCatalog[component.category].label)}</div>
+    <div class="spec-line"><strong>Verification:</strong> ${escapeHtml(component.verificationStatus)}</div>
+    <div class="spec-line"><strong>Intent:</strong> ${escapeHtml(component.intent)}</div>
+    <div class="spec-line"><strong>Pattern:</strong> ${escapeHtml(patternLabels[component.pattern] || component.pattern)}</div>
+    <div class="spec-line"><strong>Easing:</strong> ${escapeHtml(easingLabels[component.easing] || component.easing)} ${escapeHtml(component.easing)}</div>
+    <div class="spec-line"><strong>Duration:</strong> ${component.duration}ms</div>
+    <div class="spec-line"><strong>Delay:</strong> ${component.delay}ms</div>
+    <div class="spec-line"><strong>Trigger:</strong> ${escapeHtml(component.trigger)}</div>
+    <div class="spec-line"><strong>States:</strong> ${escapeHtml(component.states.join(", "))}</div>
+    <div class="spec-line"><strong>Reduced motion:</strong> ${escapeHtml(component.reducedMotion)}</div>
+    <div class="spec-line"><strong>Engineering notes:</strong> ${escapeHtml(component.engineeringNotes)}</div>
+  `;
+}
+
+function exportPayload(screen) {
+  const confirmed = screen.components.filter((component) => component.verificationStatus === "confirmed");
+  return {
+    screen_name: screen.name,
+    handoff_ready: screen.handoffReady,
+    source: {
+      figma_url: screen.figmaUrl || "",
+      image_present: Boolean(screen.sourceImageData)
+    },
+    components: confirmed.map((component) => ({
+      component_name: component.name,
+      category: component.category,
+      verification_status: component.verificationStatus,
+      motion_intent: component.intent,
+      material_pattern: component.pattern,
+      easing_name: easingLabels[component.easing] || "Custom",
+      easing_curve: component.easing,
+      duration_ms: component.duration,
+      delay_ms: component.delay,
+      trigger: component.trigger,
+      states: component.states,
+      reduced_motion: component.reducedMotion,
+      engineering_notes: component.engineeringNotes
+    }))
+  };
+}
+
+function renderHandoff(screen) {
+  const confirmed = screen.components.filter((component) => component.verificationStatus === "confirmed");
+  const blocked = screen.components.filter((component) => component.verificationStatus !== "confirmed");
+
+  els.handoffSummary.textContent = confirmed.length
+    ? `${confirmed.length} confirmed components ready for handoff. ${blocked.length} still blocked from export.`
+    : "No confirmed components yet. Confirm components before handoff export.";
+
+  els.handoffReadable.innerHTML = confirmed.length
+    ? confirmed.map((component) => `<section class="handoff-card">${readableSpec(screen, component)}</section>`).join("")
+    : `<div class="empty-copy">Confirm components in the Confirm step before handoff becomes available.</div>`;
+
+  els.handoffJson.textContent = JSON.stringify(exportPayload(screen), null, 2);
+}
+
+function renderBreakpoint() {
+  els.deviceStage.className = `device-stage ${state.breakpoint}`;
+  els.deviceLabel.textContent = `${capitalize(state.breakpoint)} preview`;
+  els.breakpointSwitcher.querySelectorAll("[data-breakpoint]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.breakpoint === state.breakpoint);
+  });
+}
+
+function prototypeMarkup(component) {
+  const label = categoryCatalog[component.category].label;
+  const commonHeader = `<div class="prototype-label">Working prototype · ${escapeHtml(label)}</div>`;
+
+  switch (component.prototype) {
+    case "button":
+      return `
+        <div class="prototype-card replay-target">
+          ${commonHeader}
+          <button class="prototype-button">Primary action</button>
+        </div>
+      `;
+    case "page":
+      return `
+        <div class="prototype-card replay-target">
+          ${commonHeader}
+          <div class="prototype-page">
+            <div class="prototype-block large"></div>
+            <div class="prototype-block"></div>
+            <div class="prototype-block"></div>
+          </div>
+        </div>
+      `;
+    case "menu":
+      return `
+        <div class="prototype-card replay-target">
+          ${commonHeader}
+          <div class="prototype-menu">
+            <div class="prototype-menu-panel"></div>
+            <div class="prototype-menu-lines">
+              <div class="prototype-line"></div>
+              <div class="prototype-line"></div>
+              <div class="prototype-line short"></div>
+            </div>
+          </div>
+        </div>
+      `;
+    case "scroll":
+      return `
+        <div class="prototype-card replay-target">
+          ${commonHeader}
+          <div class="prototype-scroll">
+            <div class="prototype-reveal"></div>
+            <div class="prototype-reveal delayed"></div>
+            <div class="prototype-reveal delayed-more"></div>
+          </div>
+        </div>
+      `;
+    case "carousel":
+      return `
+        <div class="prototype-card replay-target">
+          ${commonHeader}
+          <div class="prototype-carousel">
+            <div class="prototype-slide active"></div>
+            <div class="prototype-slide"></div>
+            <div class="prototype-slide"></div>
+          </div>
+        </div>
+      `;
+    default:
+      return `<div class="prototype-card replay-target">${commonHeader}</div>`;
+  }
+}
+
+function renderSourceReference(screen, component) {
+  const figmaMeta = parseFigmaUrl(screen.figmaUrl);
+  const sourceMeta = figmaMeta
+    ? `<div class="source-meta">Figma source: ${escapeHtml(figmaMeta.fileKey)}${figmaMeta.nodeId ? ` · node ${escapeHtml(figmaMeta.nodeId)}` : ""}</div>`
+    : screen.figmaUrl
+      ? `<div class="source-meta">Link attached as metadata.</div>`
+      : `<div class="source-meta">No Figma link attached.</div>`;
+
+  const overlay = component
+    ? `<div class="source-overlay-banner">${escapeHtml(component.name)}</div>`
+    : "";
+
+  if (screen.sourceImageData) {
+    return `
+      <section class="source-panel">
+        <div class="eyebrow">Original Design</div>
+        ${sourceMeta}
+        <div class="source-image-shell">
+          <img class="source-image" src="${screen.sourceImageData}" alt="${escapeHtml(screen.name)}">
+          ${overlay}
+        </div>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="source-panel">
+      <div class="eyebrow">Original Design</div>
+      ${sourceMeta}
+      <div class="source-empty">
+        Upload a static image from Figma to establish the visual truth for this screen.
+      </div>
+    </section>
+  `;
+}
+
+function renderStage() {
+  const screen = currentScreen();
+  const component = currentComponent();
+
+  if (state.mode === "analyze") {
+    els.stageContent.innerHTML = `
+      <div class="stage-layout">
+        ${renderSourceReference(screen, null)}
+        <section class="working-panel">
+          <div class="eyebrow">Analyze</div>
+          <div class="working-copy">Use the common component library to decide which motion-relevant parts of this screen should be handed off. The image stays the visual truth.</div>
+          <div class="working-list">
+            ${screen.components.map((item) => `
+              <button class="working-item${item.id === state.selectedComponentId ? " active" : ""}" data-stage-component="${item.id}">
+                <span>${escapeHtml(item.name)}</span>
+                <span>${escapeHtml(item.verificationStatus)}</span>
+              </button>
+            `).join("") || `<div class="empty-copy">No components suggested yet. Run Analyze screen first.</div>`}
+          </div>
+        </section>
+      </div>
+    `;
+  } else if (state.mode === "confirm") {
+    els.stageContent.innerHTML = component
+      ? `
+        <div class="stage-layout side-by-side">
+          ${renderSourceReference(screen, component)}
+          <section class="working-panel">
+            <div class="eyebrow">Working Prototype</div>
+            <div class="working-copy">This HTML is a working prototype used to discuss motion and handoff. It is not treated as the visual source of truth.</div>
+            ${prototypeMarkup(component)}
+          </section>
+        </div>
+      `
+      : `
+        <div class="empty-stage">
+          <div class="empty-title">Choose a component</div>
+          <div class="empty-copy">Select a suggested component to confirm its semantic meaning and motion details.</div>
+        </div>
+      `;
+  } else {
+    els.stageContent.innerHTML = `
+      <div class="stage-layout">
+        ${renderSourceReference(screen, null)}
+        <section class="working-panel">
+          <div class="eyebrow">Handoff Status</div>
+          <div class="working-copy">${screen.handoffReady ? "All components are confirmed and ready for developer handoff." : "Some components are still unverified or need correction, so export remains partial."}</div>
+          <div class="working-list">
+            ${screen.components.map((item) => `
+              <div class="working-item static">
+                <span>${escapeHtml(item.name)}</span>
+                <span>${escapeHtml(item.verificationStatus)}</span>
+              </div>
+            `).join("") || `<div class="empty-copy">No components available for handoff yet.</div>`}
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  els.stageContent.querySelectorAll("[data-stage-component]").forEach((button) => {
+    button.addEventListener("click", () => selectComponent(button.dataset.stageComponent));
+  });
+}
+
+function renderStageHeader(screen) {
+  els.stageTitle.textContent = screen.name;
+  els.stageEyebrow.textContent = capitalize(state.mode);
+
+  if (state.mode === "analyze") {
+    els.stageSubtitle.textContent = "Import a static design, detect common motion-relevant components, and decide what should move into semantic review.";
+  } else if (state.mode === "confirm") {
+    els.stageSubtitle.textContent = "Confirm the component type, then tune its Material Motion 3 handoff values. The HTML stays a working prototype.";
+  } else {
+    els.stageSubtitle.textContent = "Export only confirmed components as readable developer handoff and JSON.";
+  }
+}
+
+function syncSourceForm(screen) {
+  els.screenName.value = screen.name;
+  els.screenFigmaUrl.value = screen.figmaUrl;
+  els.screenPrompt.value = screen.prompt;
+}
+
+function syncInspector(screen, component) {
+  const analyzeMode = state.mode === "analyze";
+  const confirmMode = state.mode === "confirm";
+  const handoffMode = state.mode === "handoff";
+
+  els.sourceSection.classList.toggle("hidden", !analyzeMode);
+  els.analyzeSection.classList.toggle("hidden", !analyzeMode);
+  els.confirmSection.classList.toggle("hidden", !confirmMode);
+  els.handoffSection.classList.toggle("hidden", !handoffMode);
+
+  els.modeTabs.querySelectorAll("[data-mode]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.mode === state.mode);
+  });
+
+  syncSourceForm(screen);
+  renderCategoryGrid(screen);
+  renderAnalysisList(screen);
+  renderConfirmForm(component);
+  renderHandoff(screen);
+}
+
+function syncUI() {
+  ensureAtLeastOneScreen();
+  const screen = currentScreen();
+  const component = currentComponent();
+  renderScreens();
+  renderBreakpoint();
+  renderStageHeader(screen);
+  syncInspector(screen, component);
+  renderStage();
 }
 
 function escapeHtml(value) {
@@ -1540,129 +888,87 @@ function capitalize(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function initialize() {
+function replayPrototype() {
+  const node = document.querySelector(".replay-target");
+  if (!node) return;
+  node.classList.remove("replay");
+  void node.offsetWidth;
+  node.classList.add("replay");
+}
+
+function copyJson() {
+  const screen = currentScreen();
+  const confirmed = screen.components.some((component) => component.verificationStatus === "confirmed");
+  if (!confirmed) {
+    window.alert("Confirm at least one component before copying JSON.");
+    return;
+  }
+  navigator.clipboard.writeText(els.handoffJson.textContent).catch(() => {
+    window.alert("Could not copy JSON.");
+  });
+}
+
+function bindEvents() {
   els.toggleSidebar.addEventListener("click", () => {
     state.sidebarCollapsed = !state.sidebarCollapsed;
     persistState();
-    renderHierarchy();
+    renderScreens();
   });
 
-  els.breakpointSwitcher.querySelectorAll("button").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.breakpoint = button.dataset.breakpoint;
+  els.newScreen.addEventListener("click", addScreen);
+  els.importJson.addEventListener("click", importJson);
+  els.analyzeScreen.addEventListener("click", analyzeScreen);
+  els.addComponent.addEventListener("click", addComponentManually);
+  els.deleteComponent.addEventListener("click", removeComponent);
+  els.deleteScreen.addEventListener("click", removeScreen);
+  els.resetAnalysis.addEventListener("click", resetAnalysis);
+  els.playPrototype.addEventListener("click", replayPrototype);
+  els.copyJson.addEventListener("click", copyJson);
+  els.screenImage.addEventListener("change", handleImageUpload);
+
+  [els.screenName, els.screenFigmaUrl, els.screenPrompt].forEach((input) => {
+    input.addEventListener("input", () => {
+      const screen = currentScreen();
+      screen.name = els.screenName.value.trim() || screen.name;
+      screen.figmaUrl = els.screenFigmaUrl.value.trim();
+      screen.prompt = els.screenPrompt.value.trim();
+      screen.handoffReady = false;
       persistState();
-      renderBreakpoint();
+      renderStageHeader(screen);
+      renderAnalysisList(screen);
+      renderStage();
     });
   });
 
-  els.newScreen.addEventListener("click", addEmptyScreen);
-  els.importJson.addEventListener("click", importJson);
-  els.generateScreen.addEventListener("click", generateScreen);
-  els.showScreen.addEventListener("click", () => selectScreen(currentScreen().id));
-  els.addChildComponent.addEventListener("click", addChildComponent);
-  els.focusScreen.addEventListener("click", focusScreen);
-  els.deleteScreen.addEventListener("click", () => {
-    const screen = currentScreen();
-    if (!screen) return;
-    removeScreen(screen.id);
+  els.componentCategory.addEventListener("input", () => {
+    applyCategoryTemplate(els.componentCategory.value);
+    saveComponent();
   });
-  els.focusFirstComponent.addEventListener("click", () => {
-    const screen = currentScreen();
-    if (screen.components[0]) {
-      selectComponent(screen.id, screen.components[0].id);
-    }
-  });
-  els.screenImage.addEventListener("change", handleScreenImageUpload);
-  [els.screenName, els.screenFigmaUrl, els.screenPrompt].forEach((input) => {
-    input.addEventListener("input", updateScreenDraft);
-  });
-  els.recommendMotion.addEventListener("click", recommendMotion);
-  els.reanalyzeMotion.addEventListener("click", renderAnalysis);
-  els.saveComponent.addEventListener("click", saveComponent);
-  els.duplicateComponent.addEventListener("click", duplicateComponent);
-  els.deleteComponent.addEventListener("click", () => {
-    const component = currentComponent();
-    const screen = currentScreen();
-    if (!component || !screen) return;
-    removeComponent(screen.id, component.id);
-  });
-  els.playComponent.addEventListener("click", () => {
-    const component = currentComponent();
-    if (!component) return;
-    const node = els.stageContent.querySelector(`[data-preview-component="${component.id}"]`);
-    replayPreview(node);
+
+  [
+    els.componentName,
+    els.componentVerification,
+    els.componentIntent,
+    els.componentPattern,
+    els.componentEasing,
+    els.componentDuration,
+    els.componentDelay,
+    els.componentTrigger,
+    els.componentStates,
+    els.reducedMotion,
+    els.engineeringNotes
+  ].forEach((input) => {
+    input.addEventListener("input", saveComponent);
   });
 
   els.modeTabs.querySelectorAll("[data-mode]").forEach((button) => {
     button.addEventListener("click", () => setMode(button.dataset.mode));
   });
 
-  els.componentStatus.addEventListener("input", () => {
-    const component = currentComponent();
-    if (!component) return;
-    component.status = els.componentStatus.value;
-    persistState();
-    syncUI();
+  els.breakpointSwitcher.querySelectorAll("[data-breakpoint]").forEach((button) => {
+    button.addEventListener("click", () => setBreakpoint(button.dataset.breakpoint));
   });
-
-  els.componentPlatform.addEventListener("input", () => {
-    const component = currentComponent();
-    if (!component) return;
-    component.platform = els.componentPlatform.value;
-    persistState();
-    renderHandoff();
-  });
-
-  els.reducedMotion.addEventListener("input", () => {
-    const component = currentComponent();
-    if (!component) return;
-    component.reducedMotion = els.reducedMotion.value;
-    persistState();
-    renderHandoff();
-  });
-
-  els.engineeringNotes.addEventListener("input", () => {
-    const component = currentComponent();
-    if (!component) return;
-    component.engineeringNotes = els.engineeringNotes.value;
-    persistState();
-    renderHandoff();
-  });
-
-  els.approveComponent.addEventListener("click", () => {
-    const component = currentComponent();
-    if (!component) return;
-    component.status = "approved";
-    persistState();
-    syncUI();
-  });
-
-  [
-    els.componentName,
-    els.componentType,
-    els.componentPrompt,
-    els.componentInteraction,
-    els.preset,
-    els.duration,
-    els.easing,
-    els.distance,
-    els.scale,
-    els.opacity,
-    els.stagger
-  ].forEach((input) => {
-    input.addEventListener("input", () => {
-      if (state.selected.kind !== "component") return;
-      syncComponentDraftFromInputs();
-      persistState();
-      renderAnalysis();
-      applyMotionValues();
-      renderHierarchy();
-      renderStageHeader();
-      renderStage();
-    });
-  });
-
-  syncUI();
 }
 
-initialize();
+bindEvents();
+syncUI();
